@@ -210,7 +210,7 @@ void DatetimeWidget::paintEvent(QPaintEvent *e)
         m_cachedIcon.setDevicePixelRatio(ratio);
         QPainter p(&m_cachedIcon);
         // draw fashion mode datetime plugin
-        const int bigNumHeight = height() / 3.2;
+        const int bigNumHeight = side / 3.2;
         const int bigNumWidth = double(bigNumHeight) * 8 / 18;
         const int smallNumHeight = bigNumHeight / 2;
         const int smallNumWidth = double(smallNumHeight) * 5 / 9;
