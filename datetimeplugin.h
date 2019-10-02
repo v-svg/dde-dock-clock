@@ -63,7 +63,6 @@ public:
 
 private slots:
     void updateCurrentTimeString();
-    void comboBoxSlot();
     void alfaValue();
 
 private:
