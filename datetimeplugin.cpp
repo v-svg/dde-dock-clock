@@ -25,7 +25,6 @@
 #include <QDesktopWidget>
 #include <QDialog>
 #include <QLineEdit>
-#include <QPushButton>
 #include <QBoxLayout>
 #include <QFormLayout>
 #include <QFontMetrics>

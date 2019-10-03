@@ -84,7 +84,7 @@ void CalendarWidget::updateTime()
     QFont fontLabel = currentDateLabel->font();
     QFont fontApp = qApp->font();
     QFontMetrics FM(fontLabel);
-    int widthFM = FM.width(currentDate);
+    int widthFM = FM.horizontalAdvance(currentDate);
     if (widthFM  > 280)
         fontLabel.setPointSize(13);
     else {
