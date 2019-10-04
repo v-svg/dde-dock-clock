@@ -13,11 +13,13 @@ Calendar::Calendar(QWidget *parent)
 {
     setVerticalHeaderFormat(QCalendarWidget::NoVerticalHeader);
 
-	QTableView *table = findChild<QTableView *>();
-	table->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-	table->horizontalHeader()->setDefaultSectionSize(40);
-	table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-	table->verticalHeader()->setDefaultSectionSize(40);
+    QTableView *table = findChild<QTableView *>("qt_calendar_calendarview");
+    if (table) {
+    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    table->horizontalHeader()->setDefaultSectionSize(40);
+    table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    table->verticalHeader()->setDefaultSectionSize(40);
+    }
 
     QToolButton *year = findChild<QToolButton *>("qt_calendar_yearbutton");
     if (year) {
