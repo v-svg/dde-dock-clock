@@ -54,7 +54,7 @@ CalendarWidget::CalendarWidget(QWidget *parent) : QWidget(parent),
     updateDateStyle();
 
     connect(refreshDateTimer, &QTimer::timeout, this, &CalendarWidget::updateTime);
-    connect(currentDateLabel, SIGNAL(pressed()), this, SLOT(jumpToToday()));
+    connect(currentDateLabel, &QPushButton::clicked, this, &CalendarWidget::jumpToToday);
 }
 
 CalendarWidget::~CalendarWidget()
