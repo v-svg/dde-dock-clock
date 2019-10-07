@@ -25,6 +25,7 @@
 #include <QDesktopWidget>
 #include <QDialog>
 #include <QLineEdit>
+#include <QPushButton>
 #include <QBoxLayout>
 #include <QFormLayout>
 #include <QFontMetrics>
@@ -254,6 +255,10 @@ void DatetimePlugin::set()
     form->setChecked(m_settings.value("RoundForm").toBool());
     layout->addRow(form);
 
+    weekend = new QCheckBox(tr("Color weekend"));
+    weekend->setChecked(m_settings.value("ColorWeekend", true).toBool());
+    layout->addRow(weekend);
+
     hbox = new QHBoxLayout;
     label = new QLabel(tr("Color"));
     color0 = new QRadioButton();
@@ -274,19 +279,19 @@ void DatetimePlugin::set()
     color15 = new QRadioButton();
     color0->setStyleSheet("background-color: rgb(244, 67, 54, 120);");
     color1->setStyleSheet("background-color: rgb(233, 30, 99, 120);");
-    color2->setStyleSheet("background-color: rgb(156, 39, 176, 120);");
-    color3->setStyleSheet("background-color: rgb(103, 58, 183, 120);");
-    color4->setStyleSheet("background-color: rgb(63, 81, 181, 120);");
-    color5->setStyleSheet("background-color: rgb(33, 150, 243, 120);");
-    color6->setStyleSheet("background-color: rgb(3, 169, 244, 120);");
-    color7->setStyleSheet("background-color: rgb(0, 188, 212, 120);");
-    color8->setStyleSheet("background-color: rgb(0, 150, 136, 120);");
-    color9->setStyleSheet("background-color: rgb(76, 175, 80, 120);");
-    color10->setStyleSheet("background-color: rgb(139, 195, 74, 120);");
+    color2->setStyleSheet("background-color: rgb(190, 63, 213, 120);");
+    color3->setStyleSheet("background-color: rgb(136, 96, 205, 120);");
+    color4->setStyleSheet("background-color: rgb(104, 119, 202, 120);");
+    color5->setStyleSheet("background-color: rgb(25, 138, 230, 120);");
+    color6->setStyleSheet("background-color: rgb(13, 148, 211, 120);");
+    color7->setStyleSheet("background-color: rgb(9, 147, 165, 120);");
+    color8->setStyleSheet("background-color: rgb(10, 158, 142, 120);");
+    color9->setStyleSheet("background-color: rgb(51, 117, 54, 120);");
+    color10->setStyleSheet("background-color: rgb(41, 142, 46, 120);");
     color11->setStyleSheet("background-color: rgb(205, 220, 57, 120);");
     color12->setStyleSheet("background-color: rgb(255, 235, 59, 120);");
     color13->setStyleSheet("background-color: rgb(255, 193, 7, 120);");
-    color14->setStyleSheet("background-color: rgb(255, 152, 0, 120);");
+    color14->setStyleSheet("background-color: rgb(234, 165, 62, 120);");
     color15->setStyleSheet("background-color: rgb(255, 87, 34, 120);");
 
     colorInt = m_settings.value("SetColor", 5);
@@ -605,12 +610,12 @@ void DatetimePlugin::set()
 
     label = new QLabel(tr("Transparency"));
     slider = new QSlider(Qt::Horizontal);
-    slider->setRange(50, 120);
+    slider->setRange(50, 150);
     slider->setFocusPolicy(Qt::StrongFocus);
     slider->setTickPosition(QSlider::TicksBelow);
     slider->setTickInterval(5);
     slider->setSingleStep(1);
-    alfaInt = m_settings.value("SetAlfa", 85).toInt();
+    alfaInt = m_settings.value("SetAlfa", 100).toInt();
     slider->setValue(alfaInt);
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(alfaValue()));
     layout->addRow(label, slider);
@@ -647,6 +652,11 @@ void DatetimePlugin::set()
             m_settings.setValue("RoundForm", true);
         else
             m_settings.setValue("RoundForm", false);
+
+        if (weekend->isChecked())
+            m_settings.setValue("ColorWeekend", true);
+        else
+            m_settings.setValue("ColorWeekend", false);
 
         if (color0->isChecked())
             m_settings.setValue("SetColor", 0);

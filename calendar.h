@@ -1,4 +1,3 @@
-
 #ifndef CALENDAR_H
 #define CALENDAR_H
 
@@ -11,12 +10,13 @@
 
 class Calendar : public QCalendarWidget
 {
-Q_OBJECT
+    Q_OBJECT
 
 public:
     Calendar(QWidget *parent = nullptr);
     ~Calendar();
     QString textStyle;
+    QColor cellColor;
     void updateButtonStyle();
 
 protected:

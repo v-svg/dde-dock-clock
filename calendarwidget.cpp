@@ -5,6 +5,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QApplication>
+#include <QTextCharFormat>
 #include <QDateTime>
 #include <QPainter>
 #include <QCursor>
@@ -17,10 +18,8 @@ CalendarWidget::CalendarWidget(QWidget *parent) : QWidget(parent),
     refreshDateTimer->setInterval(1000);
     refreshDateTimer->start();
 
-    calendar = new Calendar;
-
-    setFixedWidth(298);
-    setFixedHeight(440);
+    setFixedWidth(319);
+    setFixedHeight(464);
 
     QVBoxLayout *vbox = new QVBoxLayout;
     QHBoxLayout *hbox = new QHBoxLayout;
@@ -35,16 +34,18 @@ CalendarWidget::CalendarWidget(QWidget *parent) : QWidget(parent),
     currentDateLabel->setFixedHeight(22);
 
     layout->addWidget(currentTimeLabel);
+    layout->setMargin(0);
 
     hbox->addStretch();
     hbox->addLayout(layout);
     hbox->addStretch();
 
     vbox->addLayout(hbox);
-    vbox->addWidget(currentDateLabel, 0, Qt::AlignHCenter);
+    vbox->addWidget(currentDateLabel, 0, Qt::AlignHCenter | Qt::AlignTop);
     vbox->addSpacing(24);
 
     hbox = new QHBoxLayout;
+    calendar = new Calendar;
     hbox->addWidget(calendar);
 
     vbox->addLayout(hbox);
@@ -69,7 +70,7 @@ void CalendarWidget::paintEvent(QPaintEvent *e)
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setPen(Qt::NoPen);
     painter.setBrush(QColor(255, 255, 255, 0.12 * 255));
-    painter.drawRect(0, 97, 298, 1);
+    painter.drawRect(0, 97, 319, 1);
 }
 
 void CalendarWidget::jumpToToday()
@@ -81,19 +82,11 @@ void CalendarWidget::updateTime()
 {
     const QDateTime dateTime = QDateTime::currentDateTime();
     QString currentDate = dateTime.date().toString(Qt::SystemLocaleLongDate);
-    QFont fontLabel = currentDateLabel->font();
-    QFont fontApp = qApp->font();
-    QFontMetrics FM(fontLabel);
-    int widthFM = FM.width(currentDate);
-    if (widthFM  > 280)
-        fontLabel.setPointSize(13);
-    else {
-        if (fontApp.pointSize() < 13)
-            fontLabel.setPointSize(fontApp.pointSize());
-        else
-            fontLabel.setPointSize(13);
-    }
-    currentDateLabel->setFont(fontLabel);
+    QFont font = qApp->font();
+    if (font.pointSize()  > 13)
+        font.setPointSize(13);
+    setFont(font);
+    calendar->setFont(font);
     if (m_settings.value("ShowSeconds").toBool() == false)
         currentTimeLabel->setText(dateTime.toString("HH:mm"));
     else
@@ -105,22 +98,34 @@ void CalendarWidget::updateTime()
 void CalendarWidget::updateDateStyle()
 {
     int intColor = m_settings.value("SetColor", 5).toInt();
-    QStringList brushColor = {
-        "244, 67, 54", "233, 30, 99", "156, 39, 176", "103, 58, 183",
-        "63, 81, 181", "25, 138, 230", "13, 148, 211", "9, 147, 165",
-        "10, 158, 142", "51, 117, 54", "139, 195, 74", "205, 220, 57",
-        "255, 235, 59", "255, 193, 7", "234, 165, 62", "255, 87, 34"};
+    QList<QColor> colorList = {
+    QColor(244, 67, 54), QColor(233, 30, 99), QColor(190, 63, 213), QColor(136, 96, 205),
+    QColor(104, 119, 202), QColor(25, 138, 230), QColor(13, 148, 211), QColor(9, 147, 165),
+    QColor(23, 140, 129), QColor(41, 142, 46), QColor(139, 195, 74), QColor(205, 220, 57),
+    QColor(255, 235, 59), QColor(255, 193, 7), QColor(234, 165, 62), QColor(255, 87, 34)};
+    QColor themeColor = colorList[intColor];
+    QString brushColor = themeColor.name(QColor::HexRgb);
     QString styleSheet = QString(
         "QPushButton {border: none;}"
         "QPushButton:!hover {color: white;}"
-        "QPushButton:hover {color: rgb(%1);}"
-        "QPushButton:pressed {color: lightGrey;}").arg(brushColor[intColor]);
+        "QPushButton:hover {color: %1;}"
+        "QPushButton:pressed {color: lightGrey;}").arg(brushColor);
     currentDateLabel->setStyleSheet(styleSheet);
     currentDateLabel->setCursor(QCursor(Qt::PointingHandCursor));
     QString  styleText = QString(
         "QToolButton {border: none;}"
-        "QWidget:hover {color: rgb(%1);}"
-        "QWidget:pressed {color: lightGrey;}").arg(brushColor[intColor]);
+        "QWidget:hover {color: %1;}"
+        "QWidget:pressed {color: lightGrey;}").arg(brushColor);
     calendar->textStyle = styleText;
+    calendar->cellColor = themeColor;
     calendar->updateButtonStyle();
+    QTextCharFormat format = calendar->weekdayTextFormat(Qt::Saturday);
+    QColor weekendColor;
+    if (m_settings.value("ColorWeekend", true).toBool() == true)
+        weekendColor = colorList[intColor];
+    else
+        weekendColor = QColor(Qt::white);
+    format.setForeground(QBrush(weekendColor, Qt::SolidPattern));
+    calendar->setWeekdayTextFormat(Qt::Saturday, format);
+    calendar->setWeekdayTextFormat(Qt::Sunday, format);
 }

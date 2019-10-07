@@ -11,6 +11,7 @@
 class CalendarWidget : public QWidget
 {
     Q_OBJECT
+
 public:
     explicit CalendarWidget(QWidget *parent = nullptr);
     ~CalendarWidget();

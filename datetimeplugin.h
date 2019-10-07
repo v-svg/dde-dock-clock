@@ -81,6 +81,7 @@ private:
     QPointer<QCheckBox> clock;
     QPointer<QCheckBox> seconds;
     QPointer<QCheckBox> form;
+    QPointer<QCheckBox> weekend;
     QPointer<QRadioButton> color0;
     QPointer<QRadioButton> color1;
     QPointer<QRadioButton> color2;
