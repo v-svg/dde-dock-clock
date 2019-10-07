@@ -13,7 +13,7 @@ Calendar::Calendar(QWidget *parent)
 {
     setVerticalHeaderFormat(QCalendarWidget::NoVerticalHeader);
 
-	QTableView *table = findChild<QTableView *>("qt_calendar_calendarview");
+    QTableView *table = findChild<QTableView *>("qt_calendar_calendarview");
     if (table) {
     table->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
     table->horizontalHeader()->setDefaultSectionSize(43);
