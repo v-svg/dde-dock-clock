@@ -164,7 +164,7 @@
     </message>
     <message>
         <source>Charging %1, %2 min until full</source>
-        <translation type="unfinished">Cargando % 1, %2 min para completarse</translation>
+        <translation>Cargando %1, %2 min para completarse</translation>
     </message>
     <message>
         <source>Charging %1, %2 hr %3 min until full</source>
@@ -321,7 +321,7 @@
     </message>
     <message>
         <source>Clock</source>
-        <translation>Reloj</translation>
+        <translation>El reloj</translation>
     </message>
     <message>
         <source>Analogue Clock</source>
@@ -329,7 +329,7 @@
     </message>
     <message>
         <source>Plugin Settings</source>
-        <translation>Configuraciones de complementos</translation>
+        <translation>Configuraciones</translation>
     </message>
     <message>
         <source>Open Calendar</source>
