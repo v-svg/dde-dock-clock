@@ -52,6 +52,7 @@ public:
 
     int itemSortKey(const QString &itemKey);
     void setSortKey(const QString &itemKey, const int order);
+    void set();
 
     QWidget *itemWidget(const QString &itemKey) override;
     QWidget *itemTipsWidget(const QString &itemKey) override;
@@ -71,7 +72,6 @@ private:
     QPointer<QLabel> m_dateTipsLabel;
     QTimer *m_refershTimer;
     QSettings m_settings;
-    void set();
     void openCalendar();
     QVariant colorInt;
     int alfaInt;
@@ -79,6 +79,9 @@ private:
     QPointer<QGroupBox> group2;
     QPointer<QGroupBox> group3;
     QPointer<QCheckBox> clock;
+    QPointer<QRadioButton> angle180;
+    QPointer<QRadioButton> angle90;
+    QPointer<QRadioButton> angle0;
     QPointer<QCheckBox> seconds;
     QPointer<QCheckBox> form;
     QPointer<QCheckBox> weekend;

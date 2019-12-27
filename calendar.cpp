@@ -7,13 +7,12 @@
 #include <QToolButton>
 #include <QCursor>
 
-Calendar::Calendar(QWidget *parent)
-   : QCalendarWidget(parent),
+Calendar::Calendar(QWidget *parent) : QCalendarWidget(parent),
       m_settings("deepin", "dde-dock-clock")
 {
     setVerticalHeaderFormat(QCalendarWidget::NoVerticalHeader);
 
-    QTableView *table = findChild<QTableView *>("qt_calendar_calendarview");
+	QTableView *table = findChild<QTableView *>("qt_calendar_calendarview");
     if (table) {
     table->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
     table->horizontalHeader()->setDefaultSectionSize(43);
@@ -50,7 +49,7 @@ void Calendar::updateButtonStyle()
     if (prevmonth) {
     prevmonth->setFixedSize(43, 43);
     prevmonth->setIcon(QIcon());
-    prevmonth->setText(QString("<<"));
+    prevmonth->setText("🡠");
     prevmonth->setStyleSheet(textStyle);
     prevmonth->setCursor(QCursor(Qt::PointingHandCursor));
     }
@@ -59,7 +58,7 @@ void Calendar::updateButtonStyle()
     if (nextmonth) {
     nextmonth->setFixedSize(43, 43);
     nextmonth->setIcon(QIcon());
-    nextmonth->setText(QString(">>"));
+    nextmonth->setText("🡢");
     nextmonth->setStyleSheet(textStyle);
     nextmonth->setCursor(QCursor(Qt::PointingHandCursor));
     }
@@ -71,12 +70,12 @@ void Calendar::paintCell(QPainter *painter, const QRect &rect, const QDate &date
     QString dateDay = QString::number(date.day());
 
     bool form = m_settings.value("RoundForm", false).toBool();
-    int alfa = m_settings.value("SetAlfa", 100).toInt();
+    int alfa = m_settings.value("SetAlfa", 110).toInt();
 
     QColor selCellColor = cellColor;
     selCellColor.setAlpha(alfa);
     QColor color = QColor(255, 255, 255);
-    color.setAlpha(alfa - 25);
+    color.setAlpha(alfa - 40);
 
     QFont font = qApp->font();
     font.setWeight(QFont::Black);

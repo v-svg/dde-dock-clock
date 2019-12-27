@@ -340,6 +340,22 @@
         <translation>Запуск цієї програми при виборі пункту меню &quot;Відкрити Календар&quot;</translation>
     </message>
     <message>
+        <source>Northern</source>
+        <translation>Північне</translation>
+    </message>
+    <message>
+        <source>Equator</source>
+        <translation>Екватор</translation>
+    </message>
+    <message>
+        <source>Southern</source>
+        <translation>Південне</translation>
+    </message>
+    <message>
+        <source>Location</source>
+        <translation>Розташування</translation>
+    </message>
+    <message>
         <source>Plugin options</source>
         <translation>Параметри плагіна</translation>
     </message>

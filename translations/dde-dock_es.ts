@@ -340,6 +340,22 @@
         <translation>Iniciar esta aplicación al seleccionar el elemento del menú &quot;Calendario abierto&quot;</translation>
     </message>
     <message>
+        <source>Northern</source>
+        <translation>Norte</translation>
+    </message>
+    <message>
+        <source>Equator</source>
+        <translation>Ecuador</translation>
+    </message>
+    <message>
+        <source>Southern</source>
+        <translation>Del Sur</translation>
+    </message>
+    <message>
+        <source>Location</source>
+        <translation>Ubicación</translation>
+    </message>
+    <message>
         <source>Plugin options</source>
         <translation>Opciones de complementos</translation>
     </message>

@@ -340,6 +340,22 @@
         <translation>Запуск этого приложения при выборе пункта меню &quot;Открыть Календарь&quot;</translation>
     </message>
     <message>
+        <source>Northern</source>
+        <translation>Северное</translation>
+    </message>
+    <message>
+        <source>Equator</source>
+        <translation>Экватор</translation>
+    </message>
+    <message>
+        <source>Southern</source>
+        <translation>Южное</translation>
+    </message>
+    <message>
+        <source>Location</source>
+        <translation>Местоположение</translation>
+    </message>
+    <message>
         <source>Plugin options</source>
         <translation>Параметры плагина</translation>
     </message>

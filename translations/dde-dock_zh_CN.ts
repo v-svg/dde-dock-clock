@@ -340,6 +340,22 @@
         <translation>选择菜单项时启动此应用程序&quot;日历&quot;</translation>
     </message>
     <message>
+        <source>Northern</source>
+        <translation>北部</translation>
+    </message>
+    <message>
+        <source>Equator</source>
+        <translation>赤道</translation>
+    </message>
+    <message>
+        <source>Southern</source>
+        <translation>南部</translation>
+    </message>
+    <message>
+        <source>Location</source>
+        <translation>位置</translation>
+    </message>
+    <message>
         <source>Plugin options</source>
         <translation>插件选项</translation>
     </message>

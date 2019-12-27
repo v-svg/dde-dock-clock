@@ -3,6 +3,7 @@
 
 #include "dde-dock/pluginsiteminterface.h"
 #include "calendar.h"
+#include "datewidget.h"
 #include <QWidget>
 #include <QCalendarWidget>
 #include <QPushButton>
@@ -16,6 +17,7 @@ public:
     explicit CalendarWidget(QWidget *parent = nullptr);
     ~CalendarWidget();
     void updateDateStyle();
+    DateWidget *datewidget;
 
 protected:
     void paintEvent(QPaintEvent *e);
@@ -26,10 +28,16 @@ public slots:
 private:
     QSettings m_settings;
     void updateTime();
-    QLabel *currentTimeLabel;
-    QPushButton *currentDateLabel;
+    void showDay();
+    void showCal();
+    void prevDay();
+    void nextDay();
+    void selDate();
+    void setDate();
+    QLabel *currentTime;
+    QPushButton *currentDate;
     Calendar *calendar;
-
+    QDate selectDate;
 };
 
 #endif // CALENDARWIDGET_H

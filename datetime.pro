@@ -9,13 +9,15 @@ HEADERS += \
     calendar.h \
     calendarwidget.h \
     datetimeplugin.h \
-    datetimewidget.h
+    datetimewidget.h \
+    datewidget.h
 
 
 SOURCES += \
     calendar.cpp \
     calendarwidget.cpp \
     datetimeplugin.cpp \
-    datetimewidget.cpp
+    datetimewidget.cpp \
+    datewidget.cpp
 
 RESOURCES += resources.qrc

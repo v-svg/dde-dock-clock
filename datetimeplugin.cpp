@@ -45,8 +45,10 @@ DatetimePlugin::DatetimePlugin(QObject *parent)
     m_centralWidget = new DatetimeWidget;
     m_calendarWidget = new CalendarWidget;
 
-    connect(m_centralWidget, &DatetimeWidget::requestUpdateGeometry, [this] { m_proxyInter->itemUpdate(this, pluginName()); });
-    connect(m_refershTimer, &QTimer::timeout, this, &DatetimePlugin::updateCurrentTimeString);
+    connect(m_centralWidget, &DatetimeWidget::requestUpdateGeometry,
+           [this] { m_proxyInter->itemUpdate(this, pluginName()); });
+    connect(m_refershTimer, &QTimer::timeout,
+            this, &DatetimePlugin::updateCurrentTimeString);
 }
 
 const QString DatetimePlugin::pluginName() const
@@ -194,9 +196,11 @@ void DatetimePlugin::updateCurrentTimeString()
     const QDateTime currentDateTime = QDateTime::currentDateTime();
 
     if (m_centralWidget->is24HourFormat())
-        m_dateTipsLabel->setText(currentDateTime.date().toString(Qt::SystemLocaleLongDate) + currentDateTime.toString(" HH:mm:ss"));
+        m_dateTipsLabel->setText(currentDateTime.date().toString(Qt::SystemLocaleLongDate)
+                         + currentDateTime.toString(" HH:mm:ss"));
     else
-        m_dateTipsLabel->setText(currentDateTime.date().toString(Qt::SystemLocaleLongDate) + currentDateTime.toString(" hh:mm:ss A"));
+        m_dateTipsLabel->setText(currentDateTime.date().toString(Qt::SystemLocaleLongDate)
+                         + currentDateTime.toString(" hh:mm:ss A"));
 
     m_centralWidget->update();
 }
@@ -244,6 +248,32 @@ void DatetimePlugin::set()
     label->setAlignment(Qt::AlignCenter);
     label->setWordWrap(true);
     layout->addRow(label);
+
+    hbox = new QHBoxLayout;
+    angle180 = new QRadioButton(tr("Northern"));
+    angle90 = new QRadioButton(tr("Equator"));
+    angle0 = new QRadioButton(tr("Southern"));
+    int angle = m_settings.value("Angle", 180).toInt();
+    if (angle == 180) {
+        angle180->setChecked(true);
+        angle90->setChecked(false);
+        angle0->setChecked(false);
+    }
+    if (angle == 90) {
+        angle180->setChecked(false);
+        angle90->setChecked(true);
+        angle0->setChecked(false);
+    }
+    if (angle == 0) {
+        angle180->setChecked(false);
+        angle90->setChecked(false);
+        angle0->setChecked(true);
+    }
+
+    hbox->addWidget(angle180);
+    hbox->addWidget(angle90);
+    hbox->addWidget(angle0);
+    layout->addRow(tr("Location"), hbox);
 
     group2->setLayout(layout);
     vbox->addWidget(group2);
@@ -311,7 +341,7 @@ void DatetimePlugin::set()
         color12->setChecked(false);
         color13->setChecked(false);
         color14->setChecked(false);
-        color15->setChecked(false); 
+        color15->setChecked(false);
     }
     if (colorInt == 1) {
         color0->setChecked(false);
@@ -610,12 +640,12 @@ void DatetimePlugin::set()
 
     label = new QLabel(tr("Transparency"));
     slider = new QSlider(Qt::Horizontal);
-    slider->setRange(50, 150);
+    slider->setRange(70, 150);
     slider->setFocusPolicy(Qt::StrongFocus);
     slider->setTickPosition(QSlider::TicksBelow);
     slider->setTickInterval(5);
     slider->setSingleStep(1);
-    alfaInt = m_settings.value("SetAlfa", 100).toInt();
+    alfaInt = m_settings.value("SetAlfa", 110).toInt();
     slider->setValue(alfaInt);
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(alfaValue()));
     layout->addRow(label, slider);
@@ -647,6 +677,13 @@ void DatetimePlugin::set()
             m_settings.setValue("ShowSeconds", true);
         else
             m_settings.setValue("ShowSeconds", false);
+
+        if (angle180->isChecked())
+            m_settings.setValue("Angle", 180);
+        if (angle90->isChecked())
+            m_settings.setValue("Angle", 90);
+        if (angle0->isChecked())
+            m_settings.setValue("Angle", 0);
 
         if (form->isChecked())
             m_settings.setValue("RoundForm", true);
@@ -702,6 +739,7 @@ void DatetimePlugin::set()
         m_settings.setValue("SetAlfa", alfaInt);
         m_centralWidget->update();
         m_calendarWidget->updateDateStyle();
+        m_calendarWidget->datewidget->moonPhase();
     }
     dialog->close();
 }

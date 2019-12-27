@@ -29,8 +29,7 @@
 
 #define PLUGIN_STATE_KEY    "enable"
 
-DatetimeWidget::DatetimeWidget(QWidget *parent)
-    : QWidget(parent),
+DatetimeWidget::DatetimeWidget(QWidget *parent) : QWidget(parent),
       m_settings("deepin", "dde-dock-clock"),
       m_24HourFormat(m_settings.value("24HourFormat", true).toBool())
 {
@@ -118,22 +117,21 @@ void DatetimeWidget::paintEvent(QPaintEvent *e)
         painter.drawText(rect(), Qt::AlignCenter, current.toString(format));
         return;
     }
-        // position and size
-        int side = qMin(width(), height());
-        painter.translate(width() / 2, height() / 2);
-        painter.scale(side / 200.0, side / 200.0);
-        // clock face shadow
-        painter.setPen(Qt::NoPen);
-        painter.setBrush(QColor(0, 0, 0, 10));
-        painter.drawEllipse(QPoint(0, 5), 76, 76);
-        painter.setBrush(QColor(0, 0, 0, 30));
-        painter.drawEllipse(QPoint(0, 5), 71, 71);
-        // clock face
-        painter.setBrush(QColor(249, 175, 21));
-        painter.drawEllipse(-69.5, -69.5, 139, 139);
-        painter.setBrush(Qt::white);
-        painter.drawEllipse(-61.5, -61.5, 123, 123);
-
+    // position and size
+    int side = qMin(width(), height());
+    painter.translate(width() / 2, height() / 2);
+    painter.scale(side / 200.0, side / 200.0);
+    // clock face shadow
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(0, 0, 0, 10));
+    painter.drawEllipse(QPoint(0, 5), 76, 76);
+    painter.setBrush(QColor(0, 0, 0, 30));
+    painter.drawEllipse(QPoint(0, 5), 71, 71);
+    // clock face
+    painter.setBrush(QColor(249, 175, 21));
+    painter.drawEllipse(-69.5, -69.5, 139, 139);
+    painter.setBrush(Qt::white);
+    painter.drawEllipse(-61.5, -61.5, 123, 123);
     // analog clock
     if (m_settings.value("ShowClock", false).toBool()) {
         // clock hands
@@ -143,7 +141,6 @@ void DatetimeWidget::paintEvent(QPaintEvent *e)
         static const int hourHandShadow[8] = { -4, 0, 4, 0, 4, -30, -4, -30 };
         static const int minuteHandShadow[8] = { -3, 0, 3, 0, 3, -42, -3, -42 };
         static const int secondHandShadow[12] = {-2, 0, -2, -55, 2, -55, 2, 0, 4, 20, -4, 20};
-
         // hour dots
         painter.setBrush(QColor(94, 94, 94));
         for (int i = 0; i < 12; ++i) {
@@ -184,14 +181,14 @@ void DatetimeWidget::paintEvent(QPaintEvent *e)
         painter.translate(QPoint(0, 7));
         painter.setBrush(QColor(0, 0, 0, 60));
         painter.save();
-        painter.rotate(6.0 * ( time.second()));
+        painter.rotate(6.0 * (time.second()));
         painter.drawConvexPolygon(QPolygon(6, secondHandShadow));
         painter.restore();
         // second hand
         painter.translate(QPoint(0, -7));
         painter.setBrush(Qt::red);
         painter.save();
-        painter.rotate(6.0 * ( time.second()));
+        painter.rotate(6.0 * (time.second()));
         painter.drawConvexPolygon(QPolygon(6, secondHand));
         painter.restore();
         painter.drawEllipse(-6, -6, 12, 12);

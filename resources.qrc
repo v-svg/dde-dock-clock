@@ -1,5 +1,33 @@
 <RCC>
     <qresource prefix="/icons">
+        <file>resources/icons/moon/0.svg</file>
+        <file>resources/icons/moon/1.svg</file>
+        <file>resources/icons/moon/2.svg</file>
+        <file>resources/icons/moon/3.svg</file>
+        <file>resources/icons/moon/4.svg</file>
+        <file>resources/icons/moon/5.svg</file>
+        <file>resources/icons/moon/6.svg</file>
+        <file>resources/icons/moon/7.svg</file>
+        <file>resources/icons/moon/8.svg</file>
+        <file>resources/icons/moon/9.svg</file>
+        <file>resources/icons/moon/10.svg</file>
+        <file>resources/icons/moon/11.svg</file>
+        <file>resources/icons/moon/12.svg</file>
+        <file>resources/icons/moon/13.svg</file>
+        <file>resources/icons/moon/14.svg</file>
+        <file>resources/icons/moon/15.svg</file>
+        <file>resources/icons/zodiac/aquarius.svg</file>
+        <file>resources/icons/zodiac/aries.svg</file>
+        <file>resources/icons/zodiac/cancer.svg</file>
+        <file>resources/icons/zodiac/capricorn.svg</file>
+        <file>resources/icons/zodiac/gemini.svg</file>
+        <file>resources/icons/zodiac/leo.svg</file>
+        <file>resources/icons/zodiac/libra.svg</file>
+        <file>resources/icons/zodiac/pisces.svg</file>
+        <file>resources/icons/zodiac/sagittarius.svg</file>
+        <file>resources/icons/zodiac/scorpio.svg</file>
+        <file>resources/icons/zodiac/taurus.svg</file>
+        <file>resources/icons/zodiac/virgo.svg</file>
         <file>resources/icons/big0.svg</file>
         <file>resources/icons/big1.svg</file>
         <file>resources/icons/big2.svg</file>
