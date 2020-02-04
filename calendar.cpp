@@ -5,7 +5,6 @@
 #include <QTableView>
 #include <QHeaderView>
 #include <QToolButton>
-#include <QCursor>
 
 Calendar::Calendar(QWidget *parent) : QCalendarWidget(parent),
       m_settings("deepin", "dde-dock-clock")
@@ -51,7 +50,7 @@ void Calendar::updateButtonStyle()
     prevmonth->setIcon(QIcon());
     prevmonth->setText("🡠");
     prevmonth->setStyleSheet(textStyle);
-    prevmonth->setCursor(QCursor(Qt::PointingHandCursor));
+    prevmonth->setCursor(Qt::PointingHandCursor);
     }
 
     QToolButton *nextmonth = findChild<QToolButton *>("qt_calendar_nextmonth");
@@ -60,7 +59,7 @@ void Calendar::updateButtonStyle()
     nextmonth->setIcon(QIcon());
     nextmonth->setText("🡢");
     nextmonth->setStyleSheet(textStyle);
-    nextmonth->setCursor(QCursor(Qt::PointingHandCursor));
+    nextmonth->setCursor(Qt::PointingHandCursor);
     }
 }
 
@@ -89,9 +88,9 @@ void Calendar::paintCell(QPainter *painter, const QRect &rect, const QDate &date
     if (date == selectedDate() && date == QDate::currentDate()) {
         painter->setBrush(color);
         if (form == true)
-            painter->drawEllipse(rect.adjusted(6, 6, -6, -6));
+            painter->drawEllipse(rect.adjusted(5.5, 5.5, -5.5, -5.5));
         else
-            painter->drawRoundedRect(rect.adjusted(6, 6, -6, -6), 3, 3);
+            painter->drawRoundedRect(rect.adjusted(5.5, 5.5, -5.5, -5.5), 3, 3);
     color = Qt::transparent;
     }
 
@@ -106,8 +105,8 @@ void Calendar::paintCell(QPainter *painter, const QRect &rect, const QDate &date
     painter->drawText(rect, Qt::AlignCenter, dateDay);
     }
     
-    painter->setPen(Qt::NoPen);
     if (date == QDate::currentDate()) {
+        painter->setPen(Qt::NoPen);
         painter->setBrush(color);
         if (form == true)
             painter->drawEllipse(rect);

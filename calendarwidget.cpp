@@ -10,7 +10,6 @@
 #include <QGraphicsOpacityEffect>
 #include <QDateTime>
 #include <QPainter>
-#include <QCursor>
 
 CalendarWidget::CalendarWidget(QWidget *parent) : QWidget(parent),
       m_settings("deepin", "dde-dock-clock")
@@ -142,7 +141,7 @@ void CalendarWidget::updateDateStyle()
     calendar->updateButtonStyle();
 
     currentDate->setStyleSheet(styleSheet.replace(" font-size: 14px; font-weight: 600;", ""));
-    currentDate->setCursor(QCursor(Qt::PointingHandCursor));
+    currentDate->setCursor(Qt::PointingHandCursor);
     
     QTextCharFormat format;
     QColor weekendColor;

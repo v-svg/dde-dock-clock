@@ -3,7 +3,6 @@
 #include <QHBoxLayout>
 #include <QApplication>
 #include <QPainter>
-#include <QCursor>
 
 DateWidget::DateWidget(QWidget *parent) : QWidget(parent),
       m_settings("deepin", "dde-dock-clock")
@@ -13,13 +12,13 @@ DateWidget::DateWidget(QWidget *parent) : QWidget(parent),
 
     prevButton = new QPushButton;
     prevButton->setText("🡠");
-    prevButton->setCursor(QCursor(Qt::PointingHandCursor));
+    prevButton->setCursor(Qt::PointingHandCursor);
     prevButton->setFixedSize(25, 25);
     prevButton->setAutoRepeat(true);
 
     nextButton = new QPushButton;
     nextButton->setText("🡢");
-    nextButton->setCursor(QCursor(Qt::PointingHandCursor));
+    nextButton->setCursor(Qt::PointingHandCursor);
     nextButton->setFixedSize(25, 25);
     nextButton->setAutoRepeat(true);
 
