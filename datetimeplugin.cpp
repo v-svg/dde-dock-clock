@@ -209,6 +209,8 @@ void DatetimePlugin::set()
 {
     QDialog *dialog = new QDialog;
     dialog->setWindowTitle(tr("Clock"));
+    dialog->setWindowIcon(QIcon::fromTheme("gnome-schedule"));
+
     QFormLayout *layout = new QFormLayout;
     QVBoxLayout *vbox = new QVBoxLayout;
     QHBoxLayout *hbox = new QHBoxLayout;
@@ -662,7 +664,7 @@ void DatetimePlugin::set()
     hbox->addStretch();
     hbox->addWidget(cancelButton);
     hbox->addWidget(confirmButton);
-    hbox->setContentsMargins(0, 10, 0, 0);
+    hbox->setContentsMargins(0, 5, 0, 0);
     vbox->addLayout(hbox);
 
     dialog->setLayout(vbox);
@@ -738,6 +740,7 @@ void DatetimePlugin::set()
         m_settings.setValue("Calendar", line_app);
         m_settings.setValue("SetAlfa", alfaInt);
         m_centralWidget->update();
+        m_centralWidget->emit requestUpdateGeometry();
         m_calendarWidget->updateDateStyle();
         m_calendarWidget->datewidget->moonPhase();
     }

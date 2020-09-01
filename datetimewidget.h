@@ -48,8 +48,6 @@ private:
     void resizeEvent(QResizeEvent *e);
     void paintEvent(QPaintEvent *e);
     const QPixmap loadSvg(const QString &fileName, const QSize size);
-
-private:
     QPixmap m_cachedIcon;
     QString m_cachedTime;
     QSettings m_settings;

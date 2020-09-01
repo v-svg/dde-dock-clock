@@ -63,18 +63,20 @@ void DatetimeWidget::toggleHourFormat()
 
 QSize DatetimeWidget::sizeHint() const
 {
+    const QDateTime current = QDateTime::currentDateTime();
     QFontMetrics FM(qApp->font());
     const Dock::Position position = qApp->property(PROP_POSITION).value<Dock::Position>();
     if (m_24HourFormat) {
         QString format = m_settings.value("Format", "HH:mm\nM/d ddd").toString();
-        if (format.contains("\\n")) {
-            QStringList SL = format.split("\\n");
+        QString text = current.toString(format);
+        if (text.contains("\\n")) {
+            QStringList SL = text.split("\\n");
             if (SL.at(0).length() > SL.at(1).length())
-                return QSize(FM.boundingRect(SL.at(0)).width(), FM.boundingRect("88:88").height() * 2);
+                return QSize(FM.boundingRect(SL.at(0)).width() + 12, FM.boundingRect("88:88").height() * 2);
             else
-                return QSize(FM.boundingRect(SL.at(1)).width(), FM.boundingRect("88:88").height() * 2);
+                return QSize(FM.boundingRect(SL.at(1)).width() + 12, FM.boundingRect("88:88").height() * 2);
         } else
-            return QSize(FM.boundingRect(format).width(), 26);
+            return QSize(FM.boundingRect(text).width() + 12, 26);
     } else
         if (position == Dock::Top || position == Dock::Bottom)
             return QSize(FM.boundingRect("88:88 AM").width() + 12, 26);
@@ -105,7 +107,18 @@ void DatetimeWidget::paintEvent(QPaintEvent *e)
     if (displayMode == Dock::Efficient) {
         QString format;
         if (m_24HourFormat)
-            format = m_settings.value("Format","HH:mm\nyyyy/M/d ddd").toString().replace("\\n","\n");
+            if (position == Dock::Top || position == Dock::Bottom)
+                format = m_settings.value("Format","HH:mm\nyyyy/M/d ddd").toString().replace("\\n","\n");
+            else {
+                QFontMetrics FM(qApp->font());
+                format = m_settings.value("Format","HH:mm\nyyyy/M/d ddd").toString().replace("\\n","\n");
+                QString text = current.toString(format);
+                if (FM.boundingRect(rect(), Qt::AlignCenter, text).width() > width())
+                    format.remove(" ddd").remove("ddd ").remove("yyyy/").remove(".yyyy").remove(":ss");
+                text = current.toString(format);
+                if (FM.boundingRect(rect(), Qt::AlignCenter, text).width() > width())
+                    format = "HH:mm";
+            }
         else {
             if (position == Dock::Top || position == Dock::Bottom)
                 format = "hh:mm AP";
@@ -137,10 +150,10 @@ void DatetimeWidget::paintEvent(QPaintEvent *e)
         // clock hands
         static const int hourHand[8] = { -3, 0, 3, 0, 3, -30, -3, -30 };
         static const int minuteHand[8] = { -2, 0, 2, 0, 2, -42, -2, -42 };
-        static const int secondHand[12] = {-1, 0, -1, -55, 1, -55, 1, 0, 4, 20, -4, 20};
+        static const int secondHand[12] = { -1, 0, -1, -55, 1, -55, 1, 0, 4, 20, -4, 20 };
         static const int hourHandShadow[8] = { -4, 0, 4, 0, 4, -30, -4, -30 };
         static const int minuteHandShadow[8] = { -3, 0, 3, 0, 3, -42, -3, -42 };
-        static const int secondHandShadow[12] = {-2, 0, -2, -55, 2, -55, 2, 0, 4, 20, -4, 20};
+        static const int secondHandShadow[12] = { -2, 0, -2, -55, 2, -55, 2, 0, 4, 20, -4, 20 };
         // hour dots
         painter.setBrush(QColor(94, 94, 94));
         for (int i = 0; i < 12; ++i) {
