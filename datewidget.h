@@ -6,7 +6,6 @@
 #include <QSettings>
 #include <QPushButton>
 #include <QLabel>
-#include <QString>
 #include <QWheelEvent>
 
 class DateWidget : public QWidget
@@ -17,19 +16,19 @@ public:
     DateWidget(QWidget *parent = nullptr);
     ~DateWidget();
     QColor dateColor;
-    QPushButton *prevButton;
-    QPushButton *nextButton;
-    QPushButton *closeButton;
     QLabel *weekLabel;
     QLabel *dateLabel;
     QLabel *monthLabel;
     QDate sDate;
     bool today;
-    void getZodiac();
-    void moonPhase();
+    void setButtonStyle(QString style);
+    void setZodiacSign();
+    void setMoonPhase();
 
 signals:
-    void hideDate();
+    void setPrevDay();
+    void setNextDay();
+    void hideDateInfo();
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent *) override;
@@ -39,6 +38,9 @@ protected:
 
 private:
     QSettings m_settings;
+    QPushButton *prevButton;
+    QPushButton *nextButton;
+    QPushButton *closeButton;
     QLabel *zodiacLabel;
     QLabel *phasesLabel;
 

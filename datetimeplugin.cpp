@@ -20,15 +20,18 @@
  */
 
 #include "datetimeplugin.h"
-#include <QLabel>
-#include <QApplication>
-#include <QDesktopWidget>
+#include <DApplication>
 #include <QDialog>
-#include <QLineEdit>
-#include <QPushButton>
-#include <QBoxLayout>
 #include <QFormLayout>
-#include <QFontMetrics>
+#include <QVBoxLayout>
+#include <QGroupBox>
+#include <QLineEdit>
+#include <QCheckBox>
+#include <QButtonGroup>
+#include <QSlider>
+#include <QDialogButtonBox>
+
+DWIDGET_USE_NAMESPACE
 
 DatetimePlugin::DatetimePlugin(QObject *parent)
     : QObject(parent),
@@ -36,8 +39,13 @@ DatetimePlugin::DatetimePlugin(QObject *parent)
       m_refershTimer(new QTimer(this)),
       m_settings("deepin", "dde-dock-clock")
 {
+    QString applicationName = qApp->applicationName();
+    qApp->setApplicationName("dde-dock-clock");
+    qDebug() << qApp->loadTranslator();
+    qApp->setApplicationName(applicationName);
+
     m_dateTipsLabel->setObjectName("clock");
-    m_dateTipsLabel->setStyleSheet("color:white; padding:0px 3px;");
+    m_dateTipsLabel->setStyleSheet("padding:0px 3px;");
 
     m_refershTimer->setInterval(1000);
     m_refershTimer->start();
@@ -45,10 +53,11 @@ DatetimePlugin::DatetimePlugin(QObject *parent)
     m_centralWidget = new DatetimeWidget;
     m_calendarWidget = new CalendarWidget;
 
-    connect(m_centralWidget, &DatetimeWidget::requestUpdateGeometry,
-           [this] { m_proxyInter->itemUpdate(this, pluginName()); });
-    connect(m_refershTimer, &QTimer::timeout,
-            this, &DatetimePlugin::updateCurrentTimeString);
+    connect(m_centralWidget, &DatetimeWidget::requestUpdateGeometry, [this] {
+        m_proxyInter->itemUpdate(this, pluginName());
+    });
+    connect(m_centralWidget, &DatetimeWidget::mouseMidBtnClicked, this, &DatetimePlugin::openCalendar);
+    connect(m_refershTimer, &QTimer::timeout, this, &DatetimePlugin::updateCurrentTimeString);
 }
 
 const QString DatetimePlugin::pluginName() const
@@ -118,7 +127,6 @@ QWidget *DatetimePlugin::itemPopupApplet(const QString &itemKey)
 {
     Q_UNUSED(itemKey);
 
-    m_calendarWidget->update();
     return m_calendarWidget;
 }
 
@@ -129,7 +137,7 @@ const QString DatetimePlugin::itemContextMenu(const QString &itemKey)
     const Dock::DisplayMode displayMode = qApp->property(PROP_DISPLAY_MODE).value<Dock::DisplayMode>();
 
     QList<QVariant> items;
-    items.reserve(4);
+    items.reserve(5);
 
     QMap<QString, QVariant> open;
     open["itemId"] = "open";
@@ -137,7 +145,7 @@ const QString DatetimePlugin::itemContextMenu(const QString &itemKey)
     open["isActive"] = true;
     items.push_back(open);
 
-    if (displayMode == Dock::Fashion && m_settings.value("ShowClock").toBool() == false) {
+    if (displayMode == Dock::Fashion && !m_settings.value("ShowClock").toBool()) {
         QMap<QString, QVariant> clock;
         clock["itemId"] = "clock";
         clock["itemText"] = tr("Analogue Clock");
@@ -213,472 +221,201 @@ void DatetimePlugin::set()
 
     QFormLayout *layout = new QFormLayout;
     QVBoxLayout *vbox = new QVBoxLayout;
-    QHBoxLayout *hbox = new QHBoxLayout;
     vbox->setSizeConstraint(QLayout::SetFixedSize);
 
-    group1 = new QGroupBox(tr("Plugin options"));
+    QGroupBox *group = new QGroupBox(tr("Plugin options"));
 
-    clock = new QCheckBox(tr("Analogue Clock"));
+    QCheckBox *clock = new QCheckBox(tr("Analogue Clock"));
     clock->setChecked(m_settings.value("ShowClock").toBool());
     layout->addRow(clock);
 
-    QLineEdit *lineEdit_format = new QLineEdit;
-    lineEdit_format->setPlaceholderText(tr("Default if empty"));
-    lineEdit_format->setText(m_settings.value("Format", tr("HH:mm\\nMM/dd ddd")).toString());
-    layout->addRow(tr("Format"), lineEdit_format);
+    QLineEdit *lineEditFormat = new QLineEdit;
+    lineEditFormat->setPlaceholderText(tr("Default if empty"));
+    lineEditFormat->setText(m_settings.value("Format", tr("HH:mm\\nMM/dd ddd")).toString());
+    layout->addRow(tr("Format"), lineEditFormat);
 
     QLabel *label = new QLabel("HH:mm:ss\\nyyyy/MM/dd ddd");
     label->setTextInteractionFlags(Qt::TextSelectableByMouse);
     label->setAlignment(Qt::AlignCenter);
     layout->addRow(tr("Such as"), label);
 
-    group1->setLayout(layout);
-    vbox->addWidget(group1);
+    group->setLayout(layout);
+    vbox->addWidget(group);
 
-    group2 = new QGroupBox(tr("Calendar options"));
+    group = new QGroupBox(tr("Calendar options"));
 
     layout = new QFormLayout;
-    seconds = new QCheckBox(tr("Show seconds"));
+    QCheckBox *seconds = new QCheckBox(tr("Show seconds"));
     seconds->setChecked(m_settings.value("ShowSeconds").toBool());
     layout->addRow(seconds);
 
-    QLineEdit *lineEdit_app = new QLineEdit;
-    lineEdit_app->setPlaceholderText(tr("Deepin Calendar if empty"));
-    lineEdit_app->setText(m_settings.value("Calendar", "dbus-send --print-reply --dest=com.deepin.Calendar /com/deepin/Calendar com.deepin.Calendar.RaiseWindow").toString());
-    layout->addRow(tr("Command"), lineEdit_app);
+    QLineEdit *lineEditApp = new QLineEdit;
+    lineEditApp->setPlaceholderText(tr("Deepin Calendar if empty"));
+    lineEditApp->setText(m_settings.value("Calendar", "dde-calendar").toString());
+    layout->addRow(tr("Command"), lineEditApp);
     label = new QLabel(tr("Launching this application when selecting the menu item \"Open Calendar\""));
     label->setAlignment(Qt::AlignCenter);
     label->setWordWrap(true);
     layout->addRow(label);
 
-    hbox = new QHBoxLayout;
-    angle180 = new QRadioButton(tr("Northern"));
-    angle90 = new QRadioButton(tr("Equator"));
-    angle0 = new QRadioButton(tr("Southern"));
+    QRadioButton *angle180 = new QRadioButton(tr("Northern"));
+    QRadioButton *angle90 = new QRadioButton(tr("Equator"));
+    QRadioButton *angle0 = new QRadioButton(tr("Southern"));
     int angle = m_settings.value("Angle", 180).toInt();
     if (angle == 180) {
         angle180->setChecked(true);
         angle90->setChecked(false);
         angle0->setChecked(false);
-    }
-    if (angle == 90) {
+    } if (angle == 90) {
         angle180->setChecked(false);
         angle90->setChecked(true);
         angle0->setChecked(false);
-    }
-    if (angle == 0) {
+    } if (angle == 0) {
         angle180->setChecked(false);
         angle90->setChecked(false);
         angle0->setChecked(true);
     }
 
+    QHBoxLayout *hbox = new QHBoxLayout;
     hbox->addWidget(angle180);
     hbox->addWidget(angle90);
     hbox->addWidget(angle0);
     layout->addRow(tr("Location"), hbox);
 
-    group2->setLayout(layout);
-    vbox->addWidget(group2);
+    group->setLayout(layout);
+    vbox->addWidget(group);
 
-    group3 = new QGroupBox(tr("Calendar Theme"));
+    group = new QGroupBox(tr("Calendar theme"));
 
     layout = new QFormLayout;
-    form = new QCheckBox(tr("Round selection"));
-    form->setChecked(m_settings.value("RoundForm").toBool());
-    layout->addRow(form);
+    QCheckBox *roundForm = new QCheckBox(tr("Round selection"));
+    roundForm->setChecked(m_settings.value("RoundForm", true).toBool());
+    layout->addRow(roundForm);
 
-    weekend = new QCheckBox(tr("Color weekend"));
+    QCheckBox *weekend = new QCheckBox(tr("Color weekend"));
     weekend->setChecked(m_settings.value("ColorWeekend", true).toBool());
     layout->addRow(weekend);
 
-    hbox = new QHBoxLayout;
-    label = new QLabel(tr("Color"));
-    color0 = new QRadioButton();
-    color1 = new QRadioButton();
-    color2 = new QRadioButton();
-    color3 = new QRadioButton();
-    color4 = new QRadioButton();
-    color5 = new QRadioButton();
-    color6 = new QRadioButton();
-    color7 = new QRadioButton();
-    color8 = new QRadioButton();
-    color9 = new QRadioButton();
-    color10 = new QRadioButton();
-    color11 = new QRadioButton();
-    color12 = new QRadioButton();
-    color13 = new QRadioButton();
-    color14 = new QRadioButton();
-    color15 = new QRadioButton();
-    color0->setStyleSheet("background-color: rgb(244, 67, 54, 120);");
-    color1->setStyleSheet("background-color: rgb(233, 30, 99, 120);");
-    color2->setStyleSheet("background-color: rgb(190, 63, 213, 120);");
-    color3->setStyleSheet("background-color: rgb(136, 96, 205, 120);");
-    color4->setStyleSheet("background-color: rgb(104, 119, 202, 120);");
-    color5->setStyleSheet("background-color: rgb(25, 138, 230, 120);");
-    color6->setStyleSheet("background-color: rgb(13, 148, 211, 120);");
-    color7->setStyleSheet("background-color: rgb(9, 147, 165, 120);");
-    color8->setStyleSheet("background-color: rgb(10, 158, 142, 120);");
-    color9->setStyleSheet("background-color: rgb(51, 117, 54, 120);");
-    color10->setStyleSheet("background-color: rgb(41, 142, 46, 120);");
-    color11->setStyleSheet("background-color: rgb(205, 220, 57, 120);");
-    color12->setStyleSheet("background-color: rgb(255, 235, 59, 120);");
-    color13->setStyleSheet("background-color: rgb(255, 193, 7, 120);");
-    color14->setStyleSheet("background-color: rgb(234, 165, 62, 120);");
-    color15->setStyleSheet("background-color: rgb(255, 87, 34, 120);");
+    colorButton1 = new QRadioButton;
+    colorButton2 = new QRadioButton;
+    colorButton3 = new QRadioButton;
+    colorButton4 = new QRadioButton;
+    colorButton5 = new QRadioButton;
+    colorButton6 = new QRadioButton;
+    colorButton7 = new QRadioButton;
+    colorButton8 = new QRadioButton;
+    colorButton9 = new QRadioButton;
+    colorButton10 = new QRadioButton;
+    colorButton11 = new QRadioButton;
+    colorButton12 = new QRadioButton;
+    colorButton13 = new QRadioButton;
+    colorButton14 = new QRadioButton;
+    colorButton15 = new QRadioButton;
+    colorButton16 = new QRadioButton;
 
-    colorInt = m_settings.value("SetColor", 5);
-    if (colorInt == 0) {
-        color0->setChecked(true);
-        color1->setChecked(false);
-        color2->setChecked(false);
-        color3->setChecked(false);
-        color4->setChecked(false);
-        color5->setChecked(false);
-        color6->setChecked(false);
-        color7->setChecked(false);
-        color8->setChecked(false);
-        color9->setChecked(false);
-        color10->setChecked(false);
-        color11->setChecked(false);
-        color12->setChecked(false);
-        color13->setChecked(false);
-        color14->setChecked(false);
-        color15->setChecked(false);
-    }
-    if (colorInt == 1) {
-        color0->setChecked(false);
-        color1->setChecked(true);
-        color2->setChecked(false);
-        color3->setChecked(false);
-        color4->setChecked(false);
-        color5->setChecked(false);
-        color6->setChecked(false);
-        color7->setChecked(false);
-        color8->setChecked(false);
-        color9->setChecked(false);
-        color10->setChecked(false);
-        color11->setChecked(false);
-        color12->setChecked(false);
-        color13->setChecked(false);
-        color14->setChecked(false);
-        color15->setChecked(false);
-    }
-    if (colorInt == 2) {
-        color0->setChecked(false);
-        color1->setChecked(false);
-        color2->setChecked(true);
-        color3->setChecked(false);
-        color4->setChecked(false);
-        color5->setChecked(false);
-        color6->setChecked(false);
-        color7->setChecked(false);
-        color8->setChecked(false);
-        color9->setChecked(false);
-        color10->setChecked(false);
-        color11->setChecked(false);
-        color12->setChecked(false);
-        color13->setChecked(false);
-        color14->setChecked(false);
-        color15->setChecked(false);
-    }
-    if (colorInt == 3) {
-        color0->setChecked(false);
-        color1->setChecked(false);
-        color2->setChecked(false);
-        color3->setChecked(true);
-        color4->setChecked(false);
-        color5->setChecked(false);
-        color6->setChecked(false);
-        color7->setChecked(false);
-        color8->setChecked(false);
-        color9->setChecked(false);
-        color10->setChecked(false);
-        color11->setChecked(false);
-        color12->setChecked(false);
-        color13->setChecked(false);
-        color14->setChecked(false);
-        color15->setChecked(false);
-    }
-    if (colorInt == 4) {
-        color0->setChecked(false);
-        color1->setChecked(false);
-        color2->setChecked(false);
-        color3->setChecked(false);
-        color4->setChecked(true);
-        color5->setChecked(false);
-        color6->setChecked(false);
-        color7->setChecked(false);
-        color8->setChecked(false);
-        color9->setChecked(false);
-        color10->setChecked(false);
-        color11->setChecked(false);
-        color12->setChecked(false);
-        color13->setChecked(false);
-        color14->setChecked(false);
-        color15->setChecked(false);
-    }
-    if (colorInt == 5) {
-        color0->setChecked(false);
-        color1->setChecked(false);
-        color2->setChecked(false);
-        color3->setChecked(false);
-        color4->setChecked(false);
-        color5->setChecked(true);
-        color6->setChecked(false);
-        color7->setChecked(false);
-        color8->setChecked(false);
-        color9->setChecked(false);
-        color10->setChecked(false);
-        color11->setChecked(false);
-        color12->setChecked(false);
-        color13->setChecked(false);
-        color14->setChecked(false);
-        color15->setChecked(false);
-    }
-    if (colorInt == 6) {
-        color0->setChecked(false);
-        color1->setChecked(false);
-        color2->setChecked(false);
-        color3->setChecked(false);
-        color4->setChecked(false);
-        color5->setChecked(false);
-        color6->setChecked(true);
-        color7->setChecked(false);
-        color8->setChecked(false);
-        color9->setChecked(false);
-        color10->setChecked(false);
-        color11->setChecked(false);
-        color12->setChecked(false);
-        color13->setChecked(false);
-        color14->setChecked(false);
-        color15->setChecked(false);
-    }
-    if (colorInt == 7) {
-        color0->setChecked(false);
-        color1->setChecked(false);
-        color2->setChecked(false);
-        color3->setChecked(false);
-        color4->setChecked(false);
-        color5->setChecked(false);
-        color6->setChecked(false);
-        color7->setChecked(true);
-        color8->setChecked(false);
-        color9->setChecked(false);
-        color10->setChecked(false);
-        color11->setChecked(false);
-        color12->setChecked(false);
-        color13->setChecked(false);
-        color14->setChecked(false);
-        color15->setChecked(false);
-    }
-    if (colorInt == 8) {
-        color0->setChecked(false);
-        color1->setChecked(false);
-        color2->setChecked(false);
-        color3->setChecked(false);
-        color4->setChecked(false);
-        color5->setChecked(false);
-        color6->setChecked(false);
-        color7->setChecked(false);
-        color8->setChecked(true);
-        color9->setChecked(false);
-        color10->setChecked(false);
-        color11->setChecked(false);
-        color12->setChecked(false);
-        color13->setChecked(false);
-        color14->setChecked(false);
-        color15->setChecked(false);
-    }
-    if (colorInt == 9) {
-        color0->setChecked(false);
-        color1->setChecked(false);
-        color2->setChecked(false);
-        color3->setChecked(false);
-        color4->setChecked(false);
-        color5->setChecked(false);
-        color6->setChecked(false);
-        color7->setChecked(false);
-        color8->setChecked(false);
-        color9->setChecked(true);
-        color10->setChecked(false);
-        color11->setChecked(false);
-        color12->setChecked(false);
-        color13->setChecked(false);
-        color14->setChecked(false);
-        color15->setChecked(false);
-    }
-    if (colorInt == 10) {
-        color0->setChecked(false);
-        color1->setChecked(false);
-        color2->setChecked(false);
-        color3->setChecked(false);
-        color4->setChecked(false);
-        color5->setChecked(false);
-        color6->setChecked(false);
-        color7->setChecked(false);
-        color8->setChecked(false);
-        color9->setChecked(false);
-        color10->setChecked(true);
-        color11->setChecked(false);
-        color12->setChecked(false);
-        color13->setChecked(false);
-        color14->setChecked(false);
-        color15->setChecked(false);
-    }
-    if (colorInt == 11) {
-        color0->setChecked(false);
-        color1->setChecked(false);
-        color2->setChecked(false);
-        color3->setChecked(false);
-        color4->setChecked(false);
-        color5->setChecked(false);
-        color6->setChecked(false);
-        color7->setChecked(false);
-        color8->setChecked(false);
-        color9->setChecked(false);
-        color10->setChecked(false);
-        color11->setChecked(true);
-        color12->setChecked(false);
-        color13->setChecked(false);
-        color14->setChecked(false);
-        color15->setChecked(false);
-    }
-    if (colorInt == 12) {
-        color0->setChecked(false);
-        color1->setChecked(false);
-        color2->setChecked(false);
-        color3->setChecked(false);
-        color4->setChecked(false);
-        color5->setChecked(false);
-        color6->setChecked(false);
-        color7->setChecked(false);
-        color8->setChecked(false);
-        color9->setChecked(false);
-        color10->setChecked(false);
-        color11->setChecked(false);
-        color12->setChecked(true);
-        color13->setChecked(false);
-        color14->setChecked(false);
-        color15->setChecked(false);
-    }
-    if (colorInt == 13) {
-        color0->setChecked(false);
-        color1->setChecked(false);
-        color2->setChecked(false);
-        color2->setChecked(false);
-        color4->setChecked(false);
-        color5->setChecked(false);
-        color6->setChecked(false);
-        color7->setChecked(false);
-        color8->setChecked(false);
-        color9->setChecked(false);
-        color10->setChecked(false);
-        color11->setChecked(false);
-        color12->setChecked(false);
-        color13->setChecked(true);
-        color14->setChecked(false);
-        color15->setChecked(false);
-    }
-    if (colorInt == 14) {
-        color0->setChecked(false);
-        color1->setChecked(false);
-        color2->setChecked(false);
-        color3->setChecked(false);
-        color4->setChecked(false);
-        color5->setChecked(false);
-        color6->setChecked(false);
-        color7->setChecked(false);
-        color8->setChecked(false);
-        color9->setChecked(false);
-        color10->setChecked(false);
-        color11->setChecked(false);
-        color12->setChecked(false);
-        color13->setChecked(false);
-        color14->setChecked(true);
-        color15->setChecked(false);
-    }
-    if (colorInt == 15) {
-        color0->setChecked(false);
-        color1->setChecked(false);
-        color2->setChecked(false);
-        color3->setChecked(false);
-        color4->setChecked(false);
-        color5->setChecked(false);
-        color6->setChecked(false);
-        color7->setChecked(false);
-        color8->setChecked(false);
-        color9->setChecked(false);
-        color10->setChecked(false);
-        color11->setChecked(false);
-        color12->setChecked(false);
-        color13->setChecked(false);
-        color14->setChecked(false);
-        color15->setChecked(true);
+    QButtonGroup *buttonGroup = new QButtonGroup;
+    buttonGroup->addButton(colorButton1, 1);
+    buttonGroup->addButton(colorButton2, 2);
+    buttonGroup->addButton(colorButton3, 3);
+    buttonGroup->addButton(colorButton4, 4);
+    buttonGroup->addButton(colorButton5, 5);
+    buttonGroup->addButton(colorButton6, 6);
+    buttonGroup->addButton(colorButton7, 7);
+    buttonGroup->addButton(colorButton8, 8);
+    buttonGroup->addButton(colorButton9, 9);
+    buttonGroup->addButton(colorButton10, 10);
+    buttonGroup->addButton(colorButton11, 11);
+    buttonGroup->addButton(colorButton12, 12);
+    buttonGroup->addButton(colorButton13, 13);
+    buttonGroup->addButton(colorButton14, 14);
+    buttonGroup->addButton(colorButton15, 15);
+    buttonGroup->addButton(colorButton16, 16);
+
+    int colorInt = m_settings.value("SetColor", 7).toInt();
+    foreach (QAbstractButton* button, buttonGroup->buttons()) {
+        if (buttonGroup->id(button) == colorInt) {
+            button->setChecked(true);
+            break;
+        }
     }
 
-    hbox->addStretch();
-    hbox->addWidget(color0);
-    hbox->addWidget(color1);
-    hbox->addWidget(color2);
-    hbox->addWidget(color3);
-    hbox->addWidget(color4);
-    hbox->addWidget(color5);
-    hbox->addWidget(color6);
-    hbox->addWidget(color7);
-    hbox->addStretch();
-    layout->addRow(label, hbox);
     hbox = new QHBoxLayout;
     hbox->addStretch();
-    hbox->addWidget(color8);
-    hbox->addWidget(color9);
-    hbox->addWidget(color10);
-    hbox->addWidget(color11);
-    hbox->addWidget(color12);
-    hbox->addWidget(color13);
-    hbox->addWidget(color14);
-    hbox->addWidget(color15);
+    hbox->setMargin(0);
+    hbox->setSpacing(0);
+    hbox->addWidget(colorButton1);
+    hbox->addWidget(colorButton2);
+    hbox->addWidget(colorButton3);
+    hbox->addWidget(colorButton4);
+    hbox->addWidget(colorButton5);
+    hbox->addWidget(colorButton6);
+    hbox->addWidget(colorButton7);
+    hbox->addWidget(colorButton8);
+    layout->addRow(tr("Accent color"), hbox);
+
+    hbox = new QHBoxLayout;
     hbox->addStretch();
+    hbox->setMargin(0);
+    hbox->setSpacing(0);
+    hbox->addWidget(colorButton9);
+    hbox->addWidget(colorButton10);
+    hbox->addWidget(colorButton11);
+    hbox->addWidget(colorButton12);
+    hbox->addWidget(colorButton13);
+    hbox->addWidget(colorButton14);
+    hbox->addWidget(colorButton15);
+    hbox->addWidget(colorButton16);
     layout->addRow("", hbox);
 
-    label = new QLabel(tr("Transparency"));
-    slider = new QSlider(Qt::Horizontal);
-    slider->setRange(70, 150);
+    colorAlfa = m_settings.value("SetAlfa", 129).toInt();
+    label = new QLabel(tr("Transparency") + " " + QString::number(colorAlfa * 100 / 255) + "%");
+
+    QSlider *slider = new QSlider(Qt::Horizontal);
+    slider->setRange(79, 154);
     slider->setFocusPolicy(Qt::StrongFocus);
     slider->setTickPosition(QSlider::TicksBelow);
     slider->setTickInterval(5);
-    slider->setSingleStep(1);
-    alfaInt = m_settings.value("SetAlfa", 110).toInt();
-    slider->setValue(alfaInt);
-    connect(slider, SIGNAL(valueChanged(int)), this, SLOT(alfaValue()));
+    slider->setSingleStep(5);
+    slider->setPageStep(5);
+    slider->setValue(colorAlfa);
     layout->addRow(label, slider);
 
-    group3->setLayout(layout);
-    vbox->addWidget(group3);
+    group->setLayout(layout);
+    vbox->addWidget(group);
 
-    hbox = new QHBoxLayout;
-    QPushButton *cancelButton = new QPushButton (tr("Cancel"));
-    QPushButton *confirmButton = new QPushButton ("OK");
-    confirmButton->setDefault(true);
-    connect(cancelButton, SIGNAL(clicked()), dialog, SLOT(reject()));
-    connect(confirmButton, SIGNAL(clicked()), dialog, SLOT(accept()));
-    hbox->addStretch();
-    hbox->addWidget(cancelButton);
-    hbox->addWidget(confirmButton);
-    hbox->setContentsMargins(0, 5, 0, 0);
-    vbox->addLayout(hbox);
+    btnRadius = roundForm->isChecked() ? 15 : 3;
+    setButtonStyle();
+
+    connect(roundForm, &QCheckBox::toggled, this, [=] {
+        btnRadius = roundForm->isChecked() ? 15 : 3;
+        setButtonStyle();
+    });
+
+    connect(slider, &QSlider::valueChanged, this, [=] {
+        colorAlfa = slider->value();
+        label->setText(tr("Transparency") + " " + QString::number(colorAlfa * 100 / 255) + "%");
+        setButtonStyle();
+    });
+
+    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Cancel |
+                                                     QDialogButtonBox::Ok, dialog);
+    buttons->setStyleSheet("button-layout: 3;");
+    buttons->setContentsMargins(0, 5, 0, 0);
+    vbox->addWidget(buttons, 1, Qt::AlignCenter);
 
     dialog->setLayout(vbox);
 
-    if (dialog->exec() == QDialog::Accepted) {
-        if (clock->isChecked())
-            m_settings.setValue("ShowClock", true);
-        else
-            m_settings.setValue("ShowClock", false);
+    connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+    connect(buttons, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
 
-        if (seconds->isChecked())
-            m_settings.setValue("ShowSeconds", true);
-        else
-            m_settings.setValue("ShowSeconds", false);
+    if (dialog->exec() == QDialog::Accepted) {
+        QString timeFormat = lineEditFormat->text();
+        if (timeFormat.isEmpty())
+            timeFormat = QString(tr("HH:mm\\nMM/dd ddd"));
+
+        QString calendarApp = lineEditApp->text();
+        if (calendarApp.isEmpty())
+            calendarApp = QString("dde-calendar");
 
         if (angle180->isChecked())
             m_settings.setValue("Angle", 180);
@@ -687,72 +424,99 @@ void DatetimePlugin::set()
         if (angle0->isChecked())
             m_settings.setValue("Angle", 0);
 
-        if (form->isChecked())
-            m_settings.setValue("RoundForm", true);
-        else
-            m_settings.setValue("RoundForm", false);
+        m_settings.setValue("ShowClock", clock->isChecked());
+        m_settings.setValue("Format", timeFormat);
+        m_settings.setValue("ShowSeconds", seconds->isChecked());
+        m_settings.setValue("Calendar", calendarApp);
+        m_settings.setValue("RoundForm", roundForm->isChecked());
+        m_settings.setValue("ColorWeekend", weekend->isChecked());        
+        m_settings.setValue("SetColor", buttonGroup->checkedId());
+        m_settings.setValue("SetAlfa", colorAlfa);
 
-        if (weekend->isChecked())
-            m_settings.setValue("ColorWeekend", true);
-        else
-            m_settings.setValue("ColorWeekend", false);
+        m_centralWidget->requestUpdateGeometry();
 
-        if (color0->isChecked())
-            m_settings.setValue("SetColor", 0);
-        if (color1->isChecked())
-            m_settings.setValue("SetColor", 1);
-        if (color2->isChecked())
-            m_settings.setValue("SetColor", 2);
-        if (color3->isChecked())
-            m_settings.setValue("SetColor", 3);
-        if (color4->isChecked())
-            m_settings.setValue("SetColor", 4);
-        if (color5->isChecked())
-            m_settings.setValue("SetColor", 5);
-        if (color6->isChecked())
-            m_settings.setValue("SetColor", 6);
-        if (color7->isChecked())
-            m_settings.setValue("SetColor", 7);
-        if (color8->isChecked())
-            m_settings.setValue("SetColor", 8);
-        if (color9->isChecked())
-            m_settings.setValue("SetColor", 9);
-        if (color10->isChecked())
-            m_settings.setValue("SetColor", 10);
-        if (color11->isChecked())
-            m_settings.setValue("SetColor", 11);
-        if (color12->isChecked())
-            m_settings.setValue("SetColor", 12);
-        if (color13->isChecked())
-            m_settings.setValue("SetColor", 13);
-        if (color14->isChecked())
-            m_settings.setValue("SetColor", 14);
-        if (color15->isChecked())
-            m_settings.setValue("SetColor", 15);
+        m_calendarWidget->updateStyle();
 
-        QString line_format = lineEdit_format->text();
-        if (line_format.isEmpty() == true) // empty line protection
-            line_format = QString(tr("HH:mm\\nMM/dd ddd"));
-        m_settings.setValue("Format", line_format);
-        QString line_app = lineEdit_app->text();
-        if (line_app.isEmpty() == true) // empty line protection
-            line_app = QString("dbus-send --print-reply --dest=com.deepin.Calendar /com/deepin/Calendar com.deepin.Calendar.RaiseWindow");
-        m_settings.setValue("Calendar", line_app);
-        m_settings.setValue("SetAlfa", alfaInt);
-        m_centralWidget->update();
-        m_centralWidget->emit requestUpdateGeometry();
-        m_calendarWidget->updateDateStyle();
-        m_calendarWidget->datewidget->moonPhase();
+        dialog->close();
     }
-    dialog->close();
+}
+
+void DatetimePlugin::setButtonStyle()
+{
+    QString style = "QRadioButton::indicator::unchecked {"
+                    "border: 3px solid transparent;"
+                    "border-radius: %1px;"
+                    "width: 24px;"
+                    "height: 24px;"
+                    "background-color: rgb(%2, %3);"
+                    "}"
+                    "QRadioButton::indicator::checked {"
+                    "border: 3px solid rgb(%2);"
+                    "border-radius: %1px;"
+                    "width: 24px;"
+                    "height: 24px;"
+                    "background-color: rgb(%2, %3);"
+                    "image: url(:/icons/resources/icons/check/check%4.svg);"
+                    "}"
+                    "QRadioButton::indicator::unchecked:hover {"
+                    "border: 3px solid rgb(%2);"
+                    "border-radius: %1px;"
+                    "width: 24px;"
+                    "height: 24px;"
+                    "background-color: rgb(%2, %3);"
+                    "}";
+    QString colorRgb = "239, 83, 80";
+    QString iconName = "1";
+    colorButton1->setStyleSheet(style.arg(btnRadius).arg(colorRgb).arg(colorAlfa).arg(iconName));
+    colorRgb = "236, 64, 122";
+    iconName = "2";
+    colorButton2->setStyleSheet(style.arg(btnRadius).arg(colorRgb).arg(colorAlfa).arg(iconName));
+    colorRgb = "171, 71, 188";
+    iconName = "3";
+    colorButton3->setStyleSheet(style.arg(btnRadius).arg(colorRgb).arg(colorAlfa).arg(iconName));
+    colorRgb = "140, 75, 255";
+    iconName = "4";
+    colorButton4->setStyleSheet(style.arg(btnRadius).arg(colorRgb).arg(colorAlfa).arg(iconName));
+    colorRgb = "92, 107, 192";
+    iconName = "5";
+    colorButton5->setStyleSheet(style.arg(btnRadius).arg(colorRgb).arg(colorAlfa).arg(iconName));
+    colorRgb = "25, 118, 210";
+    iconName = "6";
+    colorButton6->setStyleSheet(style.arg(btnRadius).arg(colorRgb).arg(colorAlfa).arg(iconName));
+    colorRgb = "44, 167, 248";
+    iconName = "7";
+    colorButton7->setStyleSheet(style.arg(btnRadius).arg(colorRgb).arg(colorAlfa).arg(iconName));
+    colorRgb = "0, 188, 212";
+    iconName = "8";
+    colorButton8->setStyleSheet(style.arg(btnRadius).arg(colorRgb).arg(colorAlfa).arg(iconName));
+    colorRgb = "77, 182, 172";
+    iconName = "9";
+    colorButton9->setStyleSheet(style.arg(btnRadius).arg(colorRgb).arg(colorAlfa).arg(iconName));
+    colorRgb = "102, 187, 106";
+    iconName = "10";
+    colorButton10->setStyleSheet(style.arg(btnRadius).arg(colorRgb).arg(colorAlfa).arg(iconName));
+    colorRgb = "124, 179, 66";
+    iconName = "11";
+    colorButton11->setStyleSheet(style.arg(btnRadius).arg(colorRgb).arg(colorAlfa).arg(iconName));
+    colorRgb = "185, 204, 0";
+    iconName = "12";
+    colorButton12->setStyleSheet(style.arg(btnRadius).arg(colorRgb).arg(colorAlfa).arg(iconName));
+    colorRgb = "243, 218, 0";
+    iconName = "13";
+    colorButton13->setStyleSheet(style.arg(btnRadius).arg(colorRgb).arg(colorAlfa).arg(iconName));
+    colorRgb = "255, 191, 0";
+    iconName = "14";
+    colorButton14->setStyleSheet(style.arg(btnRadius).arg(colorRgb).arg(colorAlfa).arg(iconName));
+    colorRgb = "255, 152, 0";
+    iconName = "15";
+    colorButton15->setStyleSheet(style.arg(btnRadius).arg(colorRgb).arg(colorAlfa).arg(iconName));
+    colorRgb = "255, 112, 67";
+    iconName = "16";
+    colorButton16->setStyleSheet(style.arg(btnRadius).arg(colorRgb).arg(colorAlfa).arg(iconName));
 }
 
 void DatetimePlugin::openCalendar()
 {
-    QProcess::startDetached(m_settings.value("Calendar", "dbus-send --print-reply --dest=com.deepin.Calendar /com/deepin/Calendar com.deepin.Calendar.RaiseWindow").toString());
-}
-
-void DatetimePlugin::alfaValue()
-{
-    alfaInt = slider->value();
+    QString process = m_settings.value("Calendar", "dde-calendar").toString();
+    QProcess::startDetached(process);
 }

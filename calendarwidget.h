@@ -4,10 +4,6 @@
 #include "dde-dock/pluginsiteminterface.h"
 #include "calendar.h"
 #include "datewidget.h"
-#include <QWidget>
-#include <QCalendarWidget>
-#include <QPushButton>
-#include <QLabel>
 
 class CalendarWidget : public QWidget
 {
@@ -16,28 +12,43 @@ class CalendarWidget : public QWidget
 public:
     explicit CalendarWidget(QWidget *parent = nullptr);
     ~CalendarWidget();
-    void updateDateStyle();
-    DateWidget *datewidget;
 
-protected:
-    void paintEvent(QPaintEvent *e);
+signals:
+    void styleChanged(const QString style);
+    void prevYears();
+    void nextYears();
 
 public slots:
     void jumpToToday();
+    void updateStyle();
 
-private:
-    QSettings m_settings;
+protected:
+    void wheelEvent(QWheelEvent *e) override;
+    void mouseReleaseEvent(QMouseEvent *e) override;
+    void paintEvent(QPaintEvent *e);
+
+private slots:
     void updateTime();
-    void showDay();
-    void showCal();
     void prevDay();
     void nextDay();
-    void selDate();
-    void setDate();
-    QLabel *currentTime;
-    QPushButton *currentDate;
-    Calendar *calendar;
-    QDate selectDate;
+
+private:
+    void selectDate();
+    void setDate(const QDate &date);
+    void setMonthWidget();
+    void setYearsWidget();
+    void setAnimation(QWidget *visibleWidget, QWidget *hiddenWidget);
+    void setWeekendColor();
+    QSettings m_settings;
+    QLabel *timeLabel;
+    QPushButton *todayButton;
+    Calendar *m_calendar;
+    DateWidget *m_date;
+    QWidget *m_months;
+    QWidget *m_years;
+    QColor m_color;
+    QButtonGroup *buttonGroup;
+    QString btnStyle;
 };
 
 #endif // CALENDARWIDGET_H

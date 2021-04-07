@@ -90,6 +90,14 @@ void DatetimeWidget::resizeEvent(QResizeEvent *e)
     QWidget::resizeEvent(e);
 }
 
+void DatetimeWidget::mouseReleaseEvent(QMouseEvent *e)
+{
+    if (e->button() == Qt::MidButton)
+        emit mouseMidBtnClicked();
+
+    QWidget::mouseReleaseEvent(e);
+}
+
 void DatetimeWidget::paintEvent(QPaintEvent *e)
 {
     Q_UNUSED(e);
@@ -214,7 +222,6 @@ void DatetimeWidget::paintEvent(QPaintEvent *e)
     if (m_cachedTime != currentTimeString) {
         m_cachedTime = currentTimeString;
         // draw new pixmap
-        m_cachedTime = currentTimeString;
         m_cachedIcon = QPixmap(size() * ratio);
         m_cachedIcon.fill(Qt::transparent);
         m_cachedIcon.setDevicePixelRatio(ratio);

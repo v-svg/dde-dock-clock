@@ -1,11 +1,10 @@
 #include "calendarwidget.h"
-#include "calendar.h"
-#include "datetimeplugin.h"
-#include "datewidget.h"
 #include <QTimer>
 #include <QVBoxLayout>
+#include <QGridLayout>
 #include <QApplication>
 #include <QTextCharFormat>
+#include <QButtonGroup>
 #include <QStackedLayout>
 #include <QGraphicsOpacityEffect>
 #include <QDateTime>
@@ -22,73 +21,114 @@ CalendarWidget::CalendarWidget(QWidget *parent) : QWidget(parent),
     setFixedHeight(468);
 
     QVBoxLayout *vbox = new QVBoxLayout;
-    QStackedLayout *slayout = new QStackedLayout;
+    QStackedLayout *stack = new QStackedLayout;
 
-    currentTime = new QLabel;
-    currentTime->setStyleSheet("QLabel {font-size: 48px;}");
-    currentTime->setFixedHeight(50);
-    currentTime->setAlignment(Qt::AlignCenter);
+    timeLabel = new QLabel;
 
-    currentDate = new QPushButton;
-    currentDate->setFixedHeight(22);
+    QFont font = timeLabel->font();
+    font.setPixelSize(46);
+    font.setWeight(QFont::Light);
 
-    vbox->addWidget(currentTime, 0, Qt::AlignCenter);
-    vbox->addWidget(currentDate, 1, Qt::AlignHCenter | Qt::AlignTop);
-    vbox->addSpacing(22);
+    timeLabel->setFont(font);
+    timeLabel->setFixedHeight(48);
 
-    calendar = new Calendar;
-    datewidget = new DateWidget;
-    datewidget->setVisible(false);
+    todayButton = new QPushButton;
+    todayButton->setFixedHeight(26);
 
-    slayout->setStackingMode(QStackedLayout::StackAll);
-    slayout->addWidget(calendar);
-    slayout->addWidget(datewidget);
+    vbox->addWidget(timeLabel, 0, Qt::AlignCenter);
+    vbox->addWidget(todayButton, 1, Qt::AlignCenter | Qt::AlignTop);
+    vbox->addSpacing(18);
 
-    vbox->addLayout(slayout);
+    m_calendar = new Calendar;
+
+    m_date = new DateWidget;
+    m_date->setVisible(false);
+
+    setMonthWidget();
+    setYearsWidget();
+
+    stack->setStackingMode(QStackedLayout::StackAll);
+    stack->addWidget(m_calendar);
+    stack->addWidget(m_date);
+    stack->addWidget(m_months);
+    stack->addWidget(m_years);
+
+    vbox->addLayout(stack);
     setLayout(vbox);
 
     updateTime();
-    updateDateStyle();
-    selDate();
+    updateStyle();
+    selectDate();
 
-    connect(refreshDateTimer, &QTimer::timeout,
-            this, &CalendarWidget::updateTime);
-    connect(currentDate, &QPushButton::clicked,
-            this, &CalendarWidget::jumpToToday);
-    connect(calendar, &Calendar::activated,
-            this, &CalendarWidget::showDay);
-    connect(datewidget, &DateWidget::hideDate,
-            this, &CalendarWidget::showCal);
-    connect(datewidget->closeButton, &QPushButton::clicked,
-            this, &CalendarWidget::showCal);
-    connect(datewidget->prevButton, &QPushButton::clicked,
-            this, &CalendarWidget::prevDay);
-    connect(datewidget->nextButton, &QPushButton::clicked,
-            this, &CalendarWidget::nextDay);
+    connect(refreshDateTimer, &QTimer::timeout, this, &CalendarWidget::updateTime);
+    connect(m_date, &DateWidget::setPrevDay, this, &CalendarWidget::prevDay);
+    connect(m_date, &DateWidget::setNextDay, this, &CalendarWidget::nextDay);
+    connect(m_date, &DateWidget::hideDateInfo, [=] {
+        m_calendar->setSelectedDate(m_date->sDate);
+        setAnimation(m_date, m_calendar);
+    });
+    connect(m_calendar, &Calendar::paletteChange, this, &CalendarWidget::updateStyle);
+    connect(m_calendar, &Calendar::activated, [=] {
+        selectDate();
+        setAnimation(m_calendar, m_date);
+    });
+    connect(m_calendar, &Calendar::monthButtonClicked, [=] {
+        setAnimation(m_calendar, m_months);
+    });
+    connect(todayButton, &QPushButton::clicked, [=] {
+        jumpToToday();
+        if (m_months->isVisible())
+           setAnimation(m_months, m_calendar);
+        if (m_years->isVisible())
+           setAnimation(m_years, m_calendar);
+    });
 }
 
 CalendarWidget::~CalendarWidget()
 {
 }
 
+void CalendarWidget::wheelEvent(QWheelEvent *e)
+{
+    if (m_years->isVisible() && m_years->underMouse()) {
+        if (e->delta() > 0)
+            emit prevYears();
+        else
+            emit nextYears();
+    }
+}
+
+void CalendarWidget::mouseReleaseEvent(QMouseEvent *e)
+{
+    if (e->button() == Qt::XButton1) {
+        if (m_months->isVisible())
+           setAnimation(m_months, m_calendar);
+        if (m_years->isVisible())
+           setAnimation(m_years, m_calendar);
+    }
+}
+
 void CalendarWidget::paintEvent(QPaintEvent *e)
 {
     Q_UNUSED(e);
 
+    QColor color = QColor(QApplication::palette().text().color());
+    color.setAlpha(26);
+
     QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
     painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(255, 255, 255, 0.12 * 255));
-    painter.drawRect(0, 105, 319, 1);
+    painter.setBrush(color);
+    painter.drawRect(QRect(0, 105, 319, 1));
 }
 
 void CalendarWidget::jumpToToday()
 {
-    calendar->setSelectedDate(QDate::currentDate());
+    m_calendar->setSelectedDate(QDate::currentDate());
 
-    if (calendar->isVisible() == false) {
-        selDate();
-        datewidget->update();
+    if (!m_calendar->isVisible()) {
+        selectDate();
+
+        m_date->update();
     }
 }
 
@@ -96,142 +136,314 @@ void CalendarWidget::updateTime()
 {
     const QDateTime dateTime = QDateTime::currentDateTime();
     QString date = dateTime.date().toString(Qt::SystemLocaleLongDate);
-    QFont font = qApp->font();
-    if (font.pointSize()  > 13)
-        font.setPointSize(13);
-    setFont(font);
-    calendar->setFont(font);
-    if (m_settings.value("ShowSeconds").toBool() == false)
-        currentTime->setText(dateTime.toString("HH:mm"));
+
+    if (m_settings.value("ShowSeconds").toBool())
+        timeLabel->setText(dateTime.toString("HH:mm:ss"));
     else
-        currentTime->setText(dateTime.toString("HH:mm:ss"));
-    currentDate->setText(date);
+        timeLabel->setText(dateTime.toString("HH:mm"));
+    todayButton->setText(date);
 }
 
-void CalendarWidget::updateDateStyle()
+void CalendarWidget::updateStyle()
 {
-    int intColor = m_settings.value("SetColor", 5).toInt();
-    QList<QColor> colorList = {QColor(244, 67, 54), QColor(233, 30, 99),
-         QColor(190, 63, 213), QColor(136, 96, 205), QColor(104, 119, 202),
-         QColor(25, 138, 230), QColor(13, 148, 211), QColor(9, 147, 165),
-         QColor(23, 140, 129), QColor(41, 142, 46), QColor(139, 195, 74),
-         QColor(205, 220, 57), QColor(255, 235, 59), QColor(255, 193, 7),
-         QColor(234, 165, 62), QColor(255, 87, 34)};
-    QColor themeColor = colorList[intColor];
-    QString textColor = themeColor.name(QColor::HexRgb);
+    int intColor = m_settings.value("SetColor", 7).toInt();
+    QList<QColor> colorList = {QColor(239, 83, 80), QColor(236, 64, 122),
+         QColor(171, 71, 188), QColor(140, 75, 255), QColor(92, 107, 192),
+         QColor(25, 118, 210), QColor(44, 167, 248), QColor(0, 188, 212),
+         QColor(77, 182, 172), QColor(102, 187, 106), QColor(124, 179, 66),
+         QColor(220, 231, 117), QColor(255, 235, 59), QColor(255, 202, 40),
+         QColor(255, 152, 0), QColor(255, 112, 67)};
+    QColor themeColor = colorList[intColor - 1];
+    QColor normalColor = QApplication::palette().color(QPalette::Text);
+    QColor pressedColor = QApplication::palette().color(QPalette::Disabled, QPalette::Text);
 
-    QString  styleText = QString(
-        "QToolButton {border: none; font-size: 16px; font-weight: 600;}"
-        "QWidget:hover {color: %1;}"
-        "QWidget:pressed {color: lightGrey;}").arg(textColor);
+    QString style = QString("QWidget {border: none; color: %1; font-size: 16px; font-weight: 600;}"
+                            "QWidget:hover {color: %2;}"
+                            "QWidget:pressed {color: %3;}"
+                           ).arg(normalColor.name(QColor::HexRgb)).arg(themeColor.name(QColor::HexRgb)
+                           ).arg(pressedColor.name(QColor::HexArgb));
+    btnStyle = style;
 
-    QString styleSheet = QString(
-        "QPushButton {border: none; font-size: 16px; font-weight: 600;}"
-        "QPushButton:!hover {color: white;}"
-        "QPushButton:hover {color: %1;}"
-        "QPushButton:pressed {color: lightGrey;}").arg(textColor);
+    m_calendar->cellColor = themeColor;
+    m_calendar->setButtonStyle(style);
 
-    datewidget->prevButton->setStyleSheet(styleSheet);
-    datewidget->nextButton->setStyleSheet(styleSheet);
-    datewidget->closeButton->setStyleSheet(styleSheet.replace("16", "14"));
-    datewidget->dateColor = themeColor;
+    m_date->dateColor = themeColor;
+    m_date->setButtonStyle(style);
+    m_date->setMoonPhase();
 
-    calendar->cellColor = themeColor;
-    calendar->textStyle = styleText;
-    calendar->updateButtonStyle();
-
-    currentDate->setStyleSheet(styleSheet.replace(" font-size: 14px; font-weight: 600;", ""));
-    currentDate->setCursor(Qt::PointingHandCursor);
+    todayButton->setFont(m_calendar->font());
+    todayButton->setStyleSheet(style.replace(" font-size: 16px; font-weight: 600;", ""));
+    todayButton->setCursor(Qt::PointingHandCursor);
     
     QTextCharFormat format;
     QColor weekendColor;
-    if (m_settings.value("ColorWeekend", true).toBool() == true)
-        weekendColor = colorList[intColor];
+    if (m_settings.value("ColorWeekend", true).toBool())
+        weekendColor = themeColor;
     else
-        weekendColor = QColor(Qt::white);
+        weekendColor = normalColor;
     format.setForeground(QBrush(weekendColor, Qt::SolidPattern));
-    calendar->setWeekdayTextFormat(Qt::Saturday, format);
-    calendar->setWeekdayTextFormat(Qt::Sunday, format);
+    m_calendar->setWeekdayTextFormat(Qt::Saturday, format);
+    m_calendar->setWeekdayTextFormat(Qt::Sunday, format);
+
+    emit styleChanged(style);
 }
 
-void CalendarWidget::showDay()
+void CalendarWidget::setAnimation(QWidget *visibleWidget, QWidget *hiddenWidget)
 {
-    selDate();
     QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect();
-    calendar->setGraphicsEffect(effect);
+    visibleWidget->setGraphicsEffect(effect);
     QPropertyAnimation *animation = new QPropertyAnimation(effect, "opacity");
     animation->setStartValue(1.0);
     animation->setEndValue(0.0);
     animation->start(QPropertyAnimation::DeleteWhenStopped);
-    connect(animation, &QPropertyAnimation::finished,
-            calendar, &CalendarWidget::hide);
+    connect(animation, &QPropertyAnimation::finished, [=] {
+        visibleWidget->setVisible(false);
+    });
 
     effect = new QGraphicsOpacityEffect();
-    datewidget->setGraphicsEffect(effect);
+    hiddenWidget->setGraphicsEffect(effect);
     animation = new QPropertyAnimation(effect, "opacity");
     animation->setStartValue(0.0);
     animation->setEndValue(1.0);
     animation->start(QPropertyAnimation::DeleteWhenStopped);
-    datewidget->setVisible(true);
-}
-
-void CalendarWidget::showCal()
-{
-    selectDate = datewidget->sDate;
-    calendar->setSelectedDate(selectDate);
-    QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect();
-    calendar->setGraphicsEffect(effect);
-    QPropertyAnimation *animation = new QPropertyAnimation(effect, "opacity");
-    animation->setEasingCurve(QEasingCurve::InOutQuad);
-    animation->setStartValue(0.0);
-    animation->setEndValue(1.0);
-    animation->start(QPropertyAnimation::DeleteWhenStopped);
-    calendar->setVisible(true);
-
-    effect = new QGraphicsOpacityEffect();
-    datewidget->setGraphicsEffect(effect);
-    animation = new QPropertyAnimation(effect, "opacity");
-    animation->setEasingCurve(QEasingCurve::InOutQuad);
-    animation->setStartValue(1.0);
-    animation->setEndValue(0.0);
-    animation->start(QPropertyAnimation::DeleteWhenStopped);
-    connect(animation, &QPropertyAnimation::finished,
-            datewidget, &DateWidget::hide);
+    hiddenWidget->setVisible(true);
 }
 
 void CalendarWidget::prevDay()
 {
-    selectDate = datewidget->sDate;
-    selectDate = selectDate.addDays(-1);
-    setDate();
+    QDate date = m_date->sDate;
+    date = date.addDays(-1);
+    setDate(date);
 }
 
 void CalendarWidget::nextDay()
 {
-    selectDate = datewidget->sDate;
-    selectDate = selectDate.addDays(1);
-    setDate();
+    QDate date = m_date->sDate;
+    date = date.addDays(1);
+    setDate(date);
 }
 
-void CalendarWidget::selDate()
+void CalendarWidget::selectDate()
 {
-    selectDate = calendar->selectedDate();
-    setDate();
+    setDate(m_calendar->selectedDate());
 }
 
-void CalendarWidget::setDate()
+void CalendarWidget::setDate(const QDate &date)
 {
-    datewidget->sDate = selectDate;
-    if (selectDate == QDate::currentDate())
-        datewidget->today = true;
+    m_date->sDate = date;
+    if (date == QDate::currentDate())
+        m_date->today = true;
     else
-        datewidget->today = false;
-    datewidget->getZodiac();
-    datewidget->moonPhase();
-    datewidget->weekLabel->setText(selectDate.toString("dddd"));
-    datewidget->dateLabel->setText(selectDate.toString("d"));
-    datewidget->monthLabel->setText(selectDate.toString("MMMM yyyy"));
-    datewidget->update();
-    calendar->setSelectedDate(selectDate);
+        m_date->today = false;
+    m_date->setZodiacSign();
+    m_date->setMoonPhase();
+    m_date->weekLabel->setText(date.toString("dddd"));
+    m_date->dateLabel->setText(date.toString("d"));
+    m_date->monthLabel->setText(date.toString("MMMM yyyy"));
+    m_date->update();
+
+    m_calendar->setSelectedDate(date);
 }
 
+void CalendarWidget::setMonthWidget()
+{
+    m_months = new QWidget;
+    m_months->setVisible(false);
+
+    QPushButton *monthButton1 = new QPushButton;
+    QPushButton *monthButton2 = new QPushButton;
+    QPushButton *monthButton3 = new QPushButton;
+    QPushButton *monthButton4 = new QPushButton;
+    QPushButton *monthButton5 = new QPushButton;
+    QPushButton *monthButton6 = new QPushButton;
+    QPushButton *monthButton7 = new QPushButton;
+    QPushButton *monthButton8 = new QPushButton;
+    QPushButton *monthButton9 = new QPushButton;
+    QPushButton *monthButton10 = new QPushButton;
+    QPushButton *monthButton11 = new QPushButton;
+    QPushButton *monthButton12 = new QPushButton;
+
+    QButtonGroup *buttonGroup = new QButtonGroup;
+    buttonGroup->addButton(monthButton1, 1);
+    buttonGroup->addButton(monthButton2, 2);
+    buttonGroup->addButton(monthButton3, 3);
+    buttonGroup->addButton(monthButton4, 4);
+    buttonGroup->addButton(monthButton5, 5);
+    buttonGroup->addButton(monthButton6, 6);
+    buttonGroup->addButton(monthButton7, 7);
+    buttonGroup->addButton(monthButton8, 8);
+    buttonGroup->addButton(monthButton9, 9);
+    buttonGroup->addButton(monthButton10, 10);
+    buttonGroup->addButton(monthButton11, 11);
+    buttonGroup->addButton(monthButton12, 12);
+
+    QGridLayout *grid = new QGridLayout;
+    grid->setMargin(0);
+    grid->setSpacing(0);
+    grid->addWidget(monthButton1, 1, 1, Qt::AlignCenter);
+    grid->addWidget(monthButton2, 1, 2, Qt::AlignCenter);
+    grid->addWidget(monthButton3, 2, 1, Qt::AlignCenter);
+    grid->addWidget(monthButton4, 2, 2, Qt::AlignCenter);
+    grid->addWidget(monthButton5, 3, 1, Qt::AlignCenter);
+    grid->addWidget(monthButton6, 3, 2, Qt::AlignCenter);
+    grid->addWidget(monthButton7, 4, 1, Qt::AlignCenter);
+    grid->addWidget(monthButton8, 4, 2, Qt::AlignCenter);
+    grid->addWidget(monthButton9, 5, 1, Qt::AlignCenter);
+    grid->addWidget(monthButton10, 5, 2, Qt::AlignCenter);
+    grid->addWidget(monthButton11, 6, 1, Qt::AlignCenter);
+    grid->addWidget(monthButton12, 6, 2, Qt::AlignCenter);
+
+    m_months->setLayout(grid);
+
+    foreach (QAbstractButton* button, buttonGroup->buttons()) {
+        QString text = locale().standaloneMonthName(buttonGroup->id(button));
+        button->setText(text.at(0).toUpper() + text.mid(1));
+        button->setFixedSize(130, 37);
+        button->setCursor(Qt::PointingHandCursor);
+    }
+
+    connect(buttonGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [=](int id) {
+        QDate currentDate = m_calendar->selectedDate();
+        QDate newDate = currentDate.addMonths(id - currentDate.month());
+        m_calendar->setSelectedDate(newDate);
+        setAnimation(m_months, m_calendar);
+    });
+    connect(this, &CalendarWidget::styleChanged, [=](QString style) {
+        foreach (QAbstractButton* button, buttonGroup->buttons()) {
+            button->setStyleSheet(style);
+        }
+    });
+}
+
+void CalendarWidget::setYearsWidget()
+{
+    m_years = new QWidget;
+    m_years->setVisible(false);
+
+    QPushButton *yearButton1 = new QPushButton;
+    QPushButton *yearButton2 = new QPushButton;
+    QPushButton *yearButton3 = new QPushButton;
+    QPushButton *yearButton4 = new QPushButton;
+    QPushButton *yearButton5 = new QPushButton;
+    QPushButton *yearButton6 = new QPushButton;
+    QPushButton *yearButton7 = new QPushButton;
+    QPushButton *yearButton8 = new QPushButton;
+    QPushButton *yearButton9 = new QPushButton;
+    QPushButton *yearButton10 = new QPushButton;
+
+    QButtonGroup *buttonGroup = new QButtonGroup;
+    buttonGroup->addButton(yearButton1, 1);
+    buttonGroup->addButton(yearButton2, 2);
+    buttonGroup->addButton(yearButton3, 3);
+    buttonGroup->addButton(yearButton4, 4);
+    buttonGroup->addButton(yearButton5, 5);
+    buttonGroup->addButton(yearButton6, 6);
+    buttonGroup->addButton(yearButton7, 7);
+    buttonGroup->addButton(yearButton8, 8);
+    buttonGroup->addButton(yearButton9, 9);
+    buttonGroup->addButton(yearButton10, 10);
+
+    QVBoxLayout *vbox = new QVBoxLayout;
+    vbox->setMargin(0);
+    vbox->setSpacing(0);
+    QHBoxLayout *hbox = new QHBoxLayout;
+
+    QPushButton *prevButton = new QPushButton;
+    prevButton->setText("ᐸ");
+    prevButton->setCursor(Qt::PointingHandCursor);
+    prevButton->setFixedSize(43, 43);
+    prevButton->setAutoRepeat(true);
+
+    QLabel *periodYearsLabel = new QLabel;
+
+    QPushButton *nextButton = new QPushButton;
+    nextButton->setText("ᐳ");
+    nextButton->setCursor(Qt::PointingHandCursor);
+    nextButton->setFixedSize(43, 43);
+    nextButton->setAutoRepeat(true);
+
+    hbox->addWidget(prevButton);
+    hbox->addStretch();
+    hbox->addWidget(periodYearsLabel);
+    hbox->addStretch();
+    hbox->addWidget(nextButton);
+    vbox->addLayout(hbox);
+
+    QGridLayout *grid = new QGridLayout;
+    grid->setMargin(0);
+    grid->setSpacing(0);
+    grid->addWidget(yearButton1, 1, 1, Qt::AlignCenter);
+    grid->addWidget(yearButton2, 1, 2, Qt::AlignCenter);
+    grid->addWidget(yearButton3, 2, 1, Qt::AlignCenter);
+    grid->addWidget(yearButton4, 2, 2, Qt::AlignCenter);
+    grid->addWidget(yearButton5, 3, 1, Qt::AlignCenter);
+    grid->addWidget(yearButton6, 3, 2, Qt::AlignCenter);
+    grid->addWidget(yearButton7, 4, 1, Qt::AlignCenter);
+    grid->addWidget(yearButton8, 4, 2, Qt::AlignCenter);
+    grid->addWidget(yearButton9, 5, 1, Qt::AlignCenter);
+    grid->addWidget(yearButton10, 5, 2, Qt::AlignCenter);
+
+    vbox->addLayout(grid);
+    m_years->setLayout(vbox);
+
+    foreach (QAbstractButton* button, buttonGroup->buttons()) {
+        int selectedYear = m_calendar->selectedDate().year();
+        int lastNumber = QString::number(selectedYear).right(1).toInt();
+        if (lastNumber > 0)
+             selectedYear = selectedYear - lastNumber;
+        button->setText(QString::number(selectedYear + buttonGroup->id(button) - 1));
+        button->setCursor(Qt::PointingHandCursor);
+        button->setFixedSize(130, 37);
+    }  
+    periodYearsLabel->setText(yearButton1->text() + " – " + yearButton10->text());
+
+    connect(prevButton, &QPushButton::clicked, [=] {
+        foreach (QAbstractButton* button, buttonGroup->buttons()) {
+            button->setText(QString::number(button->text().toInt() - 10));
+        }
+        periodYearsLabel->setText(yearButton1->text() + " – " + yearButton10->text());
+    });
+    connect(nextButton, &QPushButton::clicked, [=] {
+        foreach (QAbstractButton* button, buttonGroup->buttons()) {
+            button->setText(QString::number(button->text().toInt() + 10));
+        }
+        periodYearsLabel->setText(yearButton1->text() + " – " + yearButton10->text());
+    });
+    connect(this, &CalendarWidget::prevYears, [=] {
+        foreach (QAbstractButton* button, buttonGroup->buttons()) {
+            button->setText(QString::number(button->text().toInt() - 10));
+        }
+        periodYearsLabel->setText(yearButton1->text() + " – " + yearButton10->text());
+    });
+    connect(this, &CalendarWidget::nextYears, [=] {
+        foreach (QAbstractButton* button, buttonGroup->buttons()) {
+            button->setText(QString::number(button->text().toInt() + 10));
+        }
+        periodYearsLabel->setText(yearButton1->text() + " – " + yearButton10->text());
+    });
+    connect(buttonGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [=](int id) {
+        QDate currentDate = m_calendar->selectedDate();
+        int buttonYear = buttonGroup->button(id)->text().toInt();
+        QDate newDate = currentDate.addYears(buttonYear - currentDate.year());
+        m_calendar->setSelectedDate(newDate);
+        setAnimation(m_years, m_calendar);
+    });
+    connect(this, &CalendarWidget::styleChanged, [=](QString style) {
+        foreach (QAbstractButton* button, buttonGroup->buttons()) {
+            button->setStyleSheet(style);
+        }
+        prevButton->setStyleSheet(btnStyle);
+        nextButton->setStyleSheet(btnStyle);
+    });
+    connect(m_calendar, &Calendar::yearButtonClicked, [=] {
+        foreach (QAbstractButton* button, buttonGroup->buttons()) {
+            int selectedYear = m_calendar->selectedDate().year();
+            int lastNumber = QString::number(selectedYear).right(1).toInt();
+            if (lastNumber > 0)
+                 selectedYear = selectedYear - lastNumber;
+            button->setText(QString::number(selectedYear + buttonGroup->id(button) - 1));
+        }  
+        periodYearsLabel->setText(yearButton1->text() + " – " + yearButton10->text());
+        setAnimation(m_calendar, m_years);
+    });
+}

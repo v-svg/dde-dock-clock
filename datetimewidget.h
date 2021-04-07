@@ -37,16 +37,19 @@ public:
 
 signals:
     void requestUpdateGeometry() const;
-    void requestContextMenu() const;
+    void mouseMidBtnClicked() const;
 
 public slots:
     void toggleHourFormat();
     void toggleClock();
 
-private:
+protected:
     QSize sizeHint() const;
     void resizeEvent(QResizeEvent *e);
     void paintEvent(QPaintEvent *e);
+    void mouseReleaseEvent(QMouseEvent *e);
+
+private:
     const QPixmap loadSvg(const QString &fileName, const QSize size);
     QPixmap m_cachedIcon;
     QString m_cachedTime;

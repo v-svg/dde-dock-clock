@@ -1,21 +1,37 @@
 <RCC>
     <qresource prefix="/icons">
-        <file>resources/icons/moon/0.svg</file>
-        <file>resources/icons/moon/1.svg</file>
-        <file>resources/icons/moon/2.svg</file>
-        <file>resources/icons/moon/3.svg</file>
-        <file>resources/icons/moon/4.svg</file>
-        <file>resources/icons/moon/5.svg</file>
-        <file>resources/icons/moon/6.svg</file>
-        <file>resources/icons/moon/7.svg</file>
-        <file>resources/icons/moon/8.svg</file>
-        <file>resources/icons/moon/9.svg</file>
-        <file>resources/icons/moon/10.svg</file>
-        <file>resources/icons/moon/11.svg</file>
-        <file>resources/icons/moon/12.svg</file>
-        <file>resources/icons/moon/13.svg</file>
-        <file>resources/icons/moon/14.svg</file>
-        <file>resources/icons/moon/15.svg</file>
+        <file>resources/icons/check/check1.svg</file>
+        <file>resources/icons/check/check2.svg</file>
+        <file>resources/icons/check/check3.svg</file>
+        <file>resources/icons/check/check4.svg</file>
+        <file>resources/icons/check/check5.svg</file>
+        <file>resources/icons/check/check6.svg</file>
+        <file>resources/icons/check/check7.svg</file>
+        <file>resources/icons/check/check8.svg</file>
+        <file>resources/icons/check/check9.svg</file>
+        <file>resources/icons/check/check10.svg</file>
+        <file>resources/icons/check/check11.svg</file>
+        <file>resources/icons/check/check12.svg</file>
+        <file>resources/icons/check/check13.svg</file>
+        <file>resources/icons/check/check14.svg</file>
+        <file>resources/icons/check/check15.svg</file>
+        <file>resources/icons/check/check16.svg</file>
+        <file>resources/icons/moon/phase0.svg</file>
+        <file>resources/icons/moon/phase1.svg</file>
+        <file>resources/icons/moon/phase2.svg</file>
+        <file>resources/icons/moon/phase3.svg</file>
+        <file>resources/icons/moon/phase4.svg</file>
+        <file>resources/icons/moon/phase5.svg</file>
+        <file>resources/icons/moon/phase6.svg</file>
+        <file>resources/icons/moon/phase7.svg</file>
+        <file>resources/icons/moon/phase8.svg</file>
+        <file>resources/icons/moon/phase9.svg</file>
+        <file>resources/icons/moon/phase10.svg</file>
+        <file>resources/icons/moon/phase11.svg</file>
+        <file>resources/icons/moon/phase12.svg</file>
+        <file>resources/icons/moon/phase13.svg</file>
+        <file>resources/icons/moon/phase14.svg</file>
+        <file>resources/icons/moon/phase15.svg</file>
         <file>resources/icons/zodiac/aquarius.svg</file>
         <file>resources/icons/zodiac/aries.svg</file>
         <file>resources/icons/zodiac/cancer.svg</file>

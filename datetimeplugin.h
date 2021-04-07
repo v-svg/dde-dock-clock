@@ -22,16 +22,14 @@
 #ifndef DATETIMEPLUGIN_H
 #define DATETIMEPLUGIN_H
 
+#include <QLabel>
+#include <QTimer>
+#include <QSettings>
+#include <QRadioButton>
+
 #include "dde-dock/pluginsiteminterface.h"
 #include "datetimewidget.h"
 #include "calendarwidget.h"
-#include <QTimer>
-#include <QLabel>
-#include <QCalendarWidget>
-#include <QCheckBox>
-#include <QRadioButton>
-#include <QSlider>
-#include <QGroupBox>
 
 class DatetimePlugin : public QObject, PluginsItemInterface
 {
@@ -64,44 +62,33 @@ public:
 
 private slots:
     void updateCurrentTimeString();
-    void alfaValue();
 
 private:
-    QPointer<DatetimeWidget> m_centralWidget;
-    QPointer<CalendarWidget> m_calendarWidget;
-    QPointer<QLabel> m_dateTipsLabel;
+    DatetimeWidget *m_centralWidget;
+    CalendarWidget *m_calendarWidget;
+    QLabel *m_dateTipsLabel;
     QTimer *m_refershTimer;
     QSettings m_settings;
+    QRadioButton *colorButton1;
+    QRadioButton *colorButton2;
+    QRadioButton *colorButton3;
+    QRadioButton *colorButton4;
+    QRadioButton *colorButton5;
+    QRadioButton *colorButton6;
+    QRadioButton *colorButton7;
+    QRadioButton *colorButton8;
+    QRadioButton *colorButton9;
+    QRadioButton *colorButton10;
+    QRadioButton *colorButton11;
+    QRadioButton *colorButton12;
+    QRadioButton *colorButton13;
+    QRadioButton *colorButton14;
+    QRadioButton *colorButton15;
+    QRadioButton *colorButton16;
+    int colorAlfa = 129;
+    int btnRadius = 15;
+    void setButtonStyle();
     void openCalendar();
-    QVariant colorInt;
-    int alfaInt;
-    QPointer<QGroupBox> group1;
-    QPointer<QGroupBox> group2;
-    QPointer<QGroupBox> group3;
-    QPointer<QCheckBox> clock;
-    QPointer<QRadioButton> angle180;
-    QPointer<QRadioButton> angle90;
-    QPointer<QRadioButton> angle0;
-    QPointer<QCheckBox> seconds;
-    QPointer<QCheckBox> form;
-    QPointer<QCheckBox> weekend;
-    QPointer<QRadioButton> color0;
-    QPointer<QRadioButton> color1;
-    QPointer<QRadioButton> color2;
-    QPointer<QRadioButton> color3;
-    QPointer<QRadioButton> color4;
-    QPointer<QRadioButton> color5;
-    QPointer<QRadioButton> color6;
-    QPointer<QRadioButton> color7;
-    QPointer<QRadioButton> color8;
-    QPointer<QRadioButton> color9;
-    QPointer<QRadioButton> color10;
-    QPointer<QRadioButton> color11;
-    QPointer<QRadioButton> color12;
-    QPointer<QRadioButton> color13;
-    QPointer<QRadioButton> color14;
-    QPointer<QRadioButton> color15;
-    QPointer<QSlider> slider;
 };
 
 #endif // DATETIMEPLUGIN_H
