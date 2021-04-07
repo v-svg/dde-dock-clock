@@ -29,6 +29,7 @@ Uninstall:
 
 ### Changes ###
 Ver 1.3 - added selection of months and years
+
 Ver 1.2 - added lunar phases and zodiac signs (double click to show or hide)
 
 ### Acknowledgment ###
